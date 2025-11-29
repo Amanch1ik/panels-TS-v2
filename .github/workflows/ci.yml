@@ -1,0 +1,101 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+  admin-panel:
+    name: Admin Panel
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: admin-panel/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: admin-panel
+        run: npm ci
+      
+      - name: Run linter
+        working-directory: admin-panel
+        continue-on-error: true
+        run: npm run lint
+      
+      - name: Type check
+        working-directory: admin-panel
+        continue-on-error: true
+        run: npm run type-check
+      
+      - name: Build
+        working-directory: admin-panel
+        env:
+          VITE_API_URL: http://localhost:8000
+          VITE_ENV: production
+          VITE_WS_ENABLED: false
+          VITE_TRANSIT_ENABLED: true
+        run: npm run build
+
+  partner-panel:
+    name: Partner Panel
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: partner-panel/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: partner-panel
+        run: npm ci
+      
+      - name: Run linter
+        working-directory: partner-panel
+        continue-on-error: true
+        run: npm run lint
+      
+      - name: Type check
+        working-directory: partner-panel
+        continue-on-error: true
+        run: npm run type-check
+      
+      - name: Build
+        working-directory: partner-panel
+        env:
+          VITE_API_URL: http://localhost:8000
+          VITE_ENV: production
+          VITE_WS_ENABLED: false
+          VITE_TRANSIT_ENABLED: true
+        run: npm run build
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        continue-on-error: true
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          exit-code: '0'
+          severity: 'CRITICAL,HIGH'
+
