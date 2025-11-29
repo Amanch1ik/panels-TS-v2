@@ -278,17 +278,9 @@ Translation files are located in `src/i18n/translations.ts`
 
 ---
 
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 ---
 
-## 👥 Authors
 
-**YESS! GO Development Team**
-
----
 
 ## 🙏 Acknowledgments
 
@@ -301,9 +293,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 <div align="center">
 
-**Made with ❤️ for YESS! GO**
-
-⭐ Star this repo if you find it helpful!
 
 </div>
 
