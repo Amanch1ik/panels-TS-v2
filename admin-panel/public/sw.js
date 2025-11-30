@@ -156,9 +156,16 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Пропускаем ВСЕ запросы к Vite dev server (на всякий случай)
-  if (url.hostname === 'localhost' && (url.port === '5173' || url.port === '')) {
-    return; // НЕ перехватываем запросы к Vite dev server
+  // КРИТИЧНО: Пропускаем ВСЕ запросы к Vite dev server БЕЗ обработки
+  if (url.hostname === 'localhost' && (url.port === '5173' || url.port === '' || !url.port)) {
+    // Полностью пропускаем, не обрабатываем вообще
+    return;
+  }
+  
+  // Пропускаем все запросы к localhost (любой порт в dev режиме)
+  if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+    // В dev режиме пропускаем все запросы
+    return;
   }
   
   // Пропускаем запросы к WebSocket (HMR)
@@ -166,11 +173,14 @@ self.addEventListener('fetch', (event) => {
     return;
   }
   
-  // Пропускаем запросы к Vite client модулям
+  // Пропускаем запросы к Vite client модулям (абсолютно все)
   if (url.pathname.includes('/@vite/') || 
       url.pathname.includes('/@react-refresh') ||
       url.pathname.includes('/@id/') ||
-      url.pathname.startsWith('/node_modules/vite/')) {
+      url.pathname.includes('/@fs/') ||
+      url.pathname.includes('/node_modules/vite/') ||
+      url.pathname.includes('/src/') && url.search.includes('t=')) {
+    // Все файлы с timestamp параметром - это Vite HMR
     return;
   }
 
