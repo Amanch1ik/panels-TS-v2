@@ -315,16 +315,23 @@ Translation files are located in `src/i18n/translations.ts`
 
 ---
 
-## 📄 License
+---
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+<<<<<<< HEAD
+=======
+
+
+## 🙏 Acknowledgments
+
+- [React](https://react.dev/) - UI library
+- [Ant Design](https://ant.design/) - Component library
+- [Vite](https://vitejs.dev/) - Build tool
+- [React Leaflet](https://react-leaflet.js.org/) - Maps integration
 
 ---
 
+>>>>>>> e6e22a6b9ac6c786d49b4f676ea2acc16eeeebf9
 <div align="center">
 
-**Made with ❤️ for YESS! GO**
-
-⭐ Star this repo if you find it helpful!
 
 </div>
