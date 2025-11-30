@@ -19,7 +19,6 @@ jobs:
         with:
           node-version: '18'
           cache: 'npm'
-          cache-dependency-path: admin-panel/package-lock.json
       
       - name: Install dependencies
         working-directory: admin-panel
@@ -61,7 +60,6 @@ jobs:
         with:
           node-version: '18'
           cache: 'npm'
-          cache-dependency-path: partner-panel/package-lock.json
       
       - name: Install dependencies
         working-directory: partner-panel
