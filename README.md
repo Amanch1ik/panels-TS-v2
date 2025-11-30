@@ -320,11 +320,7 @@ Translation files are located in `src/i18n/translations.ts`
 - [React Leaflet](https://react-leaflet.js.org/) - Maps integration
 
 ---
-<<<<<<< HEAD
 
-=======
->>>>>>> e6e22a6b9ac6c786d49b4f676ea2acc16eeeebf9
->>>>>>> 34cf31d80cce999926c49a70bc468b37ad17cff6
 <div align="center">
 
 **Made with ❤️ for YESS! GO**
