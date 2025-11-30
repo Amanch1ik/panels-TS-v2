@@ -16,9 +16,10 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { NotificationCenter } from './NotificationCenter';
 import { SearchResults } from './SearchResults';
+import { MobileMenu } from './MobileMenu';
 import { t } from '@/i18n';
 import { useTheme } from '@/hooks/useTheme';
-import { SunOutlined, MoonOutlined } from '@ant-design/icons';
+import { SunOutlined, MoonOutlined, MenuOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 import { notificationsApi } from '@/services/api';
 import { toArray } from '@/utils/arrayUtils';
@@ -48,6 +49,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   const [isSearchActive, setIsSearchActive] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [language, setLanguage] = useState(localStorage.getItem('language') || 'ru');
   const [profileForm] = Form.useForm();
   const searchInputRef = React.useRef<any>(null);
@@ -220,12 +222,12 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
         collapsible={false}
         width={250}
         style={{
-          background: '#ffffff',
-          boxShadow: '2px 0 8px rgba(0,0,0,0.06)',
+          background: 'var(--sidebar-bg)',
+          boxShadow: 'var(--shadow-md)',
         }}
       >
         <div className="partner-logo">
-          <span style={{ color: '#ffffff', fontWeight: 'bold', fontSize: 24 }}>YESS!Partner</span>
+          <span style={{ color: 'var(--sidebar-text-active)', fontWeight: 'bold', fontSize: 24 }}>YESS!Partner</span>
         </div>
         <Menu
           mode="inline"
@@ -235,13 +237,38 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
           className="partner-menu"
           style={{ 
             borderRight: 0,
-            background: '#ffffff',
+            background: 'transparent',
           }}
-          theme="light"
+          theme={isDark ? 'dark' : 'light'}
         />
       </Sider>
       <Layout style={{ marginLeft: 0, transition: 'margin-left 0.3s ease' }}>
         <Header className="partner-header">
+          {/* Кнопка мобильного меню */}
+          <button
+            className="mobile-menu-toggle"
+            onClick={() => setIsMobileMenuOpen(true)}
+            type="button"
+            aria-label="Открыть меню"
+            style={{
+              display: 'none',
+              cursor: 'pointer',
+              padding: '8px',
+              borderRadius: '8px',
+              marginRight: '12px',
+              border: 'none',
+              background: 'transparent',
+              transition: 'background 0.2s',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'var(--color-bg-hover)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent';
+            }}
+          >
+            <MenuOutlined style={{ fontSize: 20, color: 'var(--color-text-primary)' }} />
+          </button>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, flex: 1, position: 'relative' }}>
             <div className={`partner-search ${isSearchActive ? 'active' : ''}`}>
               <Input
@@ -324,9 +351,9 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
               <Badge 
                 count={unreadNotificationsCount > 0 ? unreadNotificationsCount : 0} 
                 size="small"
-                style={{ backgroundColor: '#689071' }}
+                style={{ backgroundColor: 'var(--color-primary)' }}
               >
-                <BellOutlined style={{ fontSize: 18, color: '#0F2A1D', cursor: 'pointer' }} />
+                <BellOutlined style={{ fontSize: 18, color: 'var(--color-text-primary)', cursor: 'pointer' }} />
               </Badge>
             </div>
             <Dropdown 
@@ -361,6 +388,12 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
           {children}
         </Content>
       </Layout>
+
+      {/* Мобильное меню */}
+      <MobileMenu
+        open={isMobileMenuOpen}
+        onClose={() => setIsMobileMenuOpen(false)}
+      />
 
       {/* Центр уведомлений */}
       <NotificationCenter

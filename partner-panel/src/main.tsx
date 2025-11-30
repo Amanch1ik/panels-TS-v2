@@ -9,6 +9,22 @@ import './styles/global.css';
 import './styles/theme.css';
 import './i18n'; // Инициализация i18n
 
+// Инициализация темы при загрузке
+const initTheme = () => {
+  const savedTheme = localStorage.getItem('partner_panel_theme');
+  const theme = savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', theme);
+  
+  // Обновляем мета-тег для мобильных браузеров
+  const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+  if (metaThemeColor) {
+    metaThemeColor.setAttribute('content', theme === 'dark' ? '#0d1a12' : '#ffffff');
+  }
+};
+
+// Инициализируем тему сразу при загрузке
+initTheme();
+
 // Отключение Service Worker в режиме разработки
 if (import.meta.env.DEV && 'serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations().then((registrations) => {

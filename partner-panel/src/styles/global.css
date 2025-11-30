@@ -6,8 +6,9 @@
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: linear-gradient(135deg, #E3EED4 0%, #F0F7EB 100%);
-  color: #0F2A1D;
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 #root {
@@ -50,15 +51,22 @@ body {
 .ant-input,
 .ant-input-number,
 .ant-select-selector {
-  border-color: #E3EED4 !important;
+  border-color: var(--input-border) !important;
   border-radius: 12px !important;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background-color: var(--input-bg) !important;
+  color: var(--color-text-primary) !important;
+}
+
+.ant-input::placeholder,
+.ant-input-number::placeholder {
+  color: var(--color-text-tertiary) !important;
 }
 
 .ant-input:hover,
 .ant-input-number:hover,
 .ant-select-selector:hover {
-  border-color: #AEC380 !important;
+  border-color: var(--input-border-hover) !important;
 }
 
 .ant-input:focus,
@@ -66,7 +74,7 @@ body {
 .ant-input-number:focus,
 .ant-input-number:focus-visible,
 .ant-select-focused .ant-select-selector {
-  border-color: #689071 !important;
+  border-color: var(--input-border-focus) !important;
   box-shadow: 0 0 0 3px rgba(104, 144, 113, 0.15) !important;
 }
 
@@ -75,10 +83,10 @@ body {
 }
 
 .ant-table-thead > tr > th {
-  background: linear-gradient(135deg, #F0F7EB 0%, #E3EED4 100%) !important;
-  color: #0F2A1D !important;
+  background: var(--color-bg-tertiary) !important;
+  color: var(--color-text-primary) !important;
   font-weight: 600;
-  border-color: #E3EED4;
+  border-color: var(--color-border);
 }
 
 .ant-table-tbody > tr {
@@ -86,8 +94,13 @@ body {
 }
 
 .ant-table-tbody > tr:hover > td {
-  background: #F0F7EB !important;
+  background: var(--color-bg-hover) !important;
   transform: scale(1.01);
+}
+
+.ant-table-tbody > tr > td {
+  color: var(--color-text-primary) !important;
+  border-color: var(--color-border) !important;
 }
 
 .ant-pagination-item-active {
@@ -114,7 +127,7 @@ body {
 }
 
 .ant-form-item-label > label {
-  color: #0F2A1D;
+  color: var(--color-text-primary);
   font-weight: 600;
 }
 

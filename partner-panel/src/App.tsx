@@ -84,6 +84,31 @@ function App() {
   const language = localStorage.getItem('language') || 'ru';
   const antdLocale = language === 'en' ? enUS : ruRU;
   
+  // Получаем текущую тему
+  const [isDark, setIsDark] = React.useState(() => {
+    const savedTheme = localStorage.getItem('partner_panel_theme');
+    return savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  });
+  
+  // Слушаем изменения темы
+  React.useEffect(() => {
+    const observer = new MutationObserver(() => {
+      const theme = document.documentElement.getAttribute('data-theme');
+      setIsDark(theme === 'dark');
+    });
+    
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme'],
+    });
+    
+    // Устанавливаем начальное значение
+    const theme = document.documentElement.getAttribute('data-theme');
+    setIsDark(theme === 'dark');
+    
+    return () => observer.disconnect();
+  }, []);
+  
   // Инициализация системы мониторинга при загрузке приложения
   React.useEffect(() => {
     initializeMonitoring();
@@ -138,21 +163,24 @@ function App() {
         <ConfigProvider
           locale={antdLocale}
           theme={{
+            algorithm: isDark ? undefined : undefined, // Можно использовать theme.darkAlgorithm для темной темы
             token: {
-              colorPrimary: '#689071',
+              colorPrimary: isDark ? '#AEC380' : '#689071',
               borderRadius: 12,
               fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
               colorSuccess: '#52c41a',
               colorError: '#ff4d4f',
               colorWarning: '#AEC380',
               colorInfo: '#1890ff',
+              colorBgBase: isDark ? '#0d1a12' : '#ffffff',
+              colorText: isDark ? '#e8f0e3' : '#0F2A1D',
             },
             components: {
               Menu: {
-                itemSelectedBg: 'linear-gradient(135deg, #689071 0%, #AEC380 100%)',
-                itemSelectedColor: '#ffffff',
-                itemHoverBg: '#E3EED4',
-                itemActiveBg: 'linear-gradient(135deg, #689071 0%, #AEC380 100%)',
+                itemSelectedBg: isDark ? 'rgba(174, 195, 128, 0.2)' : 'linear-gradient(135deg, #689071 0%, #AEC380 100%)',
+                itemSelectedColor: isDark ? '#AEC380' : '#ffffff',
+                itemHoverBg: isDark ? 'rgba(174, 195, 128, 0.1)' : '#E3EED4',
+                itemActiveBg: isDark ? 'rgba(174, 195, 128, 0.2)' : 'linear-gradient(135deg, #689071 0%, #AEC380 100%)',
                 itemBorderRadius: 12,
               },
               Button: {
@@ -162,18 +190,18 @@ function App() {
               },
               Card: {
                 borderRadius: 16,
-                boxShadow: '0 2px 12px rgba(15, 42, 29, 0.08)',
+                boxShadow: isDark ? '0 2px 12px rgba(0, 0, 0, 0.3)' : '0 2px 12px rgba(15, 42, 29, 0.08)',
                 paddingLG: 24,
               },
               Input: {
                 borderRadius: 12,
-                activeBorderColor: '#689071',
+                activeBorderColor: isDark ? '#AEC380' : '#689071',
                 hoverBorderColor: '#AEC380',
               },
               Table: {
                 borderRadius: 12,
-                headerBg: '#F0F7EB',
-                headerColor: '#0F2A1D',
+                headerBg: isDark ? '#1a2f1f' : '#F0F7EB',
+                headerColor: isDark ? '#e8f0e3' : '#0F2A1D',
               },
             },
           }}
