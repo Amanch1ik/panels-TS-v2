@@ -61,78 +61,43 @@ if (!rootElement) {
 }
 
 // Агрессивное отключение Service Worker в режиме разработки
-// Выполняем ДО рендеринга приложения, чтобы Service Worker не успел загрузиться
+// Выполняем ДО рендеринга приложения
 if (import.meta.env.DEV && 'serviceWorker' in navigator) {
-  // Выполняем синхронно, не ждем
   (async function cleanupServiceWorker() {
     try {
-      // Немедленно отключаем контроллер
+      console.log('🧹 Начинаем отключение Service Worker для разработки...');
+      
+      // Отправляем сообщение контроллеру для остановки
       if (navigator.serviceWorker.controller) {
         navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
       }
       
-      // Отключаем все регистрации
+      // Получаем все регистрации и отключаем их
       const registrations = await navigator.serviceWorker.getRegistrations();
-      for (const registration of registrations) {
-        await registration.unregister();
-      }
-      
-      // Очищаем кэши
-      const cacheNames = await caches.keys();
-      for (const cacheName of cacheNames) {
-        await caches.delete(cacheName);
-      }
-      
-      console.log('✅ Service Worker отключен для разработки');
-    } catch (error) {
-      console.error('❌ Ошибка отключения Service Worker:', error);
-    }
-  })();
-}
-  // Выполняем немедленно, не ждем загрузки DOM
-  (async () => {
-    try {
-      // Шаг 1: Отправляем сообщение контроллеру для остановки
-      if (navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
-      }
-      
-      // Шаг 2: Получаем все регистрации
-      const registrations = await navigator.serviceWorker.getRegistrations();
-      
       if (registrations.length > 0) {
-        console.log(`🗑️ Отключение ${registrations.length} Service Worker(s)...`);
-        
-        // Шаг 3: Отменяем регистрацию всех Service Workers
-        await Promise.all(
-          registrations.map(reg => 
-            reg.unregister().then(success => {
-              if (success) {
-                console.log('✅ Service Worker отключен');
-              }
-            })
-          )
-        );
+        console.log(`🗑️ Отключаем ${registrations.length} Service Worker(s)...`);
+        await Promise.all(registrations.map(reg => reg.unregister()));
+        console.log('✅ Service Workers отключены');
       }
       
-      // Шаг 4: Очищаем все кэши
+      // Очищаем все кэши
       const cacheNames = await caches.keys();
       if (cacheNames.length > 0) {
-        console.log(`🗑️ Очистка ${cacheNames.length} кэша(ей)...`);
+        console.log(`🗑️ Очищаем ${cacheNames.length} кэша(ей)...`);
         await Promise.all(cacheNames.map(name => caches.delete(name)));
-        console.log('✅ Все кэши очищены');
+        console.log('✅ Кэши очищены');
       }
       
       console.log('✅ Service Worker полностью отключен для разработки');
       
-      // Шаг 5: Если это первый запуск, перезагружаем страницу один раз
+      // Перезагружаем страницу один раз после очистки
       const hasCleaned = sessionStorage.getItem('sw-cleaned');
       if (!hasCleaned && (registrations.length > 0 || cacheNames.length > 0)) {
         sessionStorage.setItem('sw-cleaned', 'true');
-        console.log('🔄 Перезагрузка страницы для завершения очистки...');
+        console.log('🔄 Перезагрузка страницы через 1 секунду...');
         setTimeout(() => {
           window.location.reload();
-        }, 500);
+        }, 1000);
       }
     } catch (error) {
       console.error('❌ Ошибка при отключении Service Worker:', error);
