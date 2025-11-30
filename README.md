@@ -305,13 +305,7 @@ Translation files are located in `src/i18n/translations.ts`
 
 
 ---
----
-<<<<<<< HEAD
 
-=======
-<<<<<<< HEAD
-=======
->>>>>>> 34cf31d80cce999926c49a70bc468b37ad17cff6
 ## 🙏 Acknowledgments
 
 - [React](https://react.dev/) - UI library
