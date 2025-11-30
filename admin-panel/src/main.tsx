@@ -60,64 +60,57 @@ if (!rootElement) {
   throw new Error('Root element not found');
 }
 
-// Отключение Service Worker в режиме разработки (делаем это сразу и агрессивно)
+// Агрессивное отключение Service Worker в режиме разработки
 if (import.meta.env.DEV && 'serviceWorker' in navigator) {
-  // Немедленно отменяем регистрацию всех Service Workers
-  if (navigator.serviceWorker.controller) {
-    navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
-  }
-  
-  navigator.serviceWorker.getRegistrations().then((registrations) => {
-    if (registrations.length === 0) {
-      console.log('✅ No Service Workers registered');
-      return;
+  // Выполняем немедленно, не ждем загрузки DOM
+  (async () => {
+    try {
+      // Шаг 1: Отправляем сообщение контроллеру для остановки
+      if (navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
+      }
+      
+      // Шаг 2: Получаем все регистрации
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      
+      if (registrations.length > 0) {
+        console.log(`🗑️ Отключение ${registrations.length} Service Worker(s)...`);
+        
+        // Шаг 3: Отменяем регистрацию всех Service Workers
+        await Promise.all(
+          registrations.map(reg => 
+            reg.unregister().then(success => {
+              if (success) {
+                console.log('✅ Service Worker отключен');
+              }
+            })
+          )
+        );
+      }
+      
+      // Шаг 4: Очищаем все кэши
+      const cacheNames = await caches.keys();
+      if (cacheNames.length > 0) {
+        console.log(`🗑️ Очистка ${cacheNames.length} кэша(ей)...`);
+        await Promise.all(cacheNames.map(name => caches.delete(name)));
+        console.log('✅ Все кэши очищены');
+      }
+      
+      console.log('✅ Service Worker полностью отключен для разработки');
+      
+      // Шаг 5: Если это первый запуск, перезагружаем страницу один раз
+      const hasCleaned = sessionStorage.getItem('sw-cleaned');
+      if (!hasCleaned && (registrations.length > 0 || cacheNames.length > 0)) {
+        sessionStorage.setItem('sw-cleaned', 'true');
+        console.log('🔄 Перезагрузка страницы для завершения очистки...');
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
+      }
+    } catch (error) {
+      console.error('❌ Ошибка при отключении Service Worker:', error);
     }
-    
-    console.log(`🗑️ Unregistering ${registrations.length} Service Worker(s)...`);
-    
-    // Отменяем регистрацию всех Service Workers
-    const unregisterPromises = registrations.map((registration) => {
-      return registration.unregister().then((success) => {
-        if (success) {
-          console.log('✅ Service Worker unregistered successfully');
-        } else {
-          console.warn('⚠️ Failed to unregister Service Worker');
-        }
-      });
-    });
-    
-    Promise.all(unregisterPromises).then(() => {
-      // Очищаем все кэши после отмены регистрации
-      caches.keys().then((cacheNames) => {
-        if (cacheNames.length === 0) {
-          console.log('✅ No caches to clear');
-          return;
-        }
-        
-        console.log(`🗑️ Clearing ${cacheNames.length} cache(s)...`);
-        const deletePromises = cacheNames.map((cacheName) => {
-          return caches.delete(cacheName).then((success) => {
-            if (success) {
-              console.log(`✅ Cache "${cacheName}" deleted`);
-            }
-          });
-        });
-        
-        Promise.all(deletePromises).then(() => {
-          console.log('✅ All Service Workers and caches cleared for development');
-          // Принудительная перезагрузка страницы для полного очищения
-          if (window.location.search.includes('sw-cleanup')) {
-            // Уже перезагружались
-          } else {
-            console.log('🔄 Reloading page to complete cleanup...');
-            window.location.href = window.location.href + (window.location.search ? '&' : '?') + 'sw-cleanup=1';
-          }
-        });
-      });
-    });
-  }).catch((error) => {
-    console.error('❌ Error unregistering Service Workers:', error);
-  });
+  })();
 } else if ('serviceWorker' in navigator && import.meta.env.PROD) {
   // Регистрация Service Worker только в production режиме
   window.addEventListener('load', () => {

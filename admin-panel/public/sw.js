@@ -1,4 +1,58 @@
 // Service Worker для YESS Admin Panel PWA
+
+// КРИТИЧНО: Полностью отключаем Service Worker в режиме разработки
+// Проверяем, если мы на localhost:5173 (Vite dev server), не работаем вообще
+(function() {
+  'use strict';
+  
+  // Проверка dev режима - если мы на localhost с портом 5173, отключаемся
+  const isDev = self.location.hostname === 'localhost' && 
+                (self.location.port === '5173' || self.location.port === '');
+  
+  if (isDev) {
+    // В dev режиме НЕ устанавливаем Service Worker
+    self.addEventListener('install', (event) => {
+      event.waitUntil(
+        self.skipWaiting().then(() => {
+          console.log('[SW] Service Worker disabled in dev mode');
+        })
+      );
+    });
+    
+    self.addEventListener('activate', (event) => {
+      event.waitUntil(
+        Promise.all([
+          // Удаляем все кэши
+          caches.keys().then((cacheNames) => {
+            return Promise.all(cacheNames.map((cacheName) => {
+              console.log('[SW] Deleting cache:', cacheName);
+              return caches.delete(cacheName);
+            }));
+          }),
+          // Отключаемся
+          self.clients.claim()
+        ]).then(() => {
+          console.log('[SW] Service Worker deactivated in dev mode');
+          // Отменяем регистрацию
+          return self.registration.unregister().catch(() => {
+            // Игнорируем ошибки
+          });
+        })
+      );
+    });
+    
+    // НЕ перехватываем никакие запросы в dev режиме
+    self.addEventListener('fetch', (event) => {
+      // Просто ничего не делаем - пропускаем все запросы
+      return;
+    });
+    
+    // Останавливаем выполнение здесь
+    return;
+  }
+})();
+
+// Код ниже выполняется ТОЛЬКО в production режиме
 const CACHE_NAME = 'yess-admin-v1.0.0';
 const STATIC_CACHE_NAME = 'yess-admin-static-v1.0.0';
 const API_CACHE_NAME = 'yess-admin-api-v1.0.0';
@@ -18,7 +72,7 @@ const API_ENDPOINTS = [
   '/api/v1/admin/stats/transactions'
 ];
 
-// Установка Service Worker
+// Установка Service Worker (только в production)
 self.addEventListener('install', (event) => {
   console.log('[SW] Установка Service Worker');
   event.waitUntil(
@@ -81,12 +135,12 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Пропускаем ВСЕ запросы к Vite dev server (localhost:5173 или без порта)
+  // Пропускаем ВСЕ запросы к Vite dev server (на всякий случай)
   if (url.hostname === 'localhost' && (url.port === '5173' || url.port === '')) {
     return; // НЕ перехватываем запросы к Vite dev server
   }
   
-  // Пропускаем запросы к Vite HMR WebSocket
+  // Пропускаем запросы к WebSocket (HMR)
   if (url.protocol === 'ws:' || url.protocol === 'wss:') {
     return;
   }
@@ -196,7 +250,7 @@ self.addEventListener('message', (event) => {
   }
 });
 
-// Обработка push уведомлений (если будут реализованы)
+// Обработка push уведомлений
 self.addEventListener('push', (event) => {
   if (event.data) {
     const data = event.data.json();
