@@ -28,8 +28,6 @@ console.log('Performance:', report.performance);
 
 ## Документация
 
-- **Интеграция**: `shared/monitoring/INTEGRATION.md`
-- **Тестирование**: `shared/monitoring/TESTING.md`
 - **API**: `shared/monitoring/README.md`
 
 ## Компоненты
