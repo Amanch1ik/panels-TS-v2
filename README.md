@@ -303,24 +303,11 @@ Translation files are located in `src/i18n/translations.ts`
 - **[Monitoring](docs/MONITORING.md)** - Monitoring system guide
 - **[Changelog](docs/CHANGELOG.md)** - History of changes
 
----
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
 
 ---
-
 ---
-
 <<<<<<< HEAD
 =======
-
-
 ## 🙏 Acknowledgments
 
 - [React](https://react.dev/) - UI library
@@ -329,7 +316,6 @@ Translation files are located in `src/i18n/translations.ts`
 - [React Leaflet](https://react-leaflet.js.org/) - Maps integration
 
 ---
-
 >>>>>>> e6e22a6b9ac6c786d49b4f676ea2acc16eeeebf9
 <div align="center">
 
