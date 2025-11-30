@@ -317,10 +317,6 @@ Translation files are located in `src/i18n/translations.ts`
 
 ---
 
-<<<<<<< HEAD
-=======
-
-
 ## 🙏 Acknowledgments
 
 - [React](https://react.dev/) - UI library
@@ -330,8 +326,10 @@ Translation files are located in `src/i18n/translations.ts`
 
 ---
 
->>>>>>> e6e22a6b9ac6c786d49b4f676ea2acc16eeeebf9
 <div align="center">
 
+**Made with ❤️ for YESS! GO**
+
+⭐ Star this repo if you find it helpful!
 
 </div>
