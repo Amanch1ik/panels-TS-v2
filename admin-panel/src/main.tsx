@@ -44,8 +44,23 @@ if (!rootElement) {
   throw new Error('Root element not found');
 }
 
-// Регистрация Service Worker для offline режима
-if ('serviceWorker' in navigator) {
+// Отключение Service Worker в режиме разработки
+if (import.meta.env.DEV && 'serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then((registrations) => {
+    registrations.forEach((registration) => {
+      registration.unregister().then(() => {
+        console.log('Service Worker unregistered for development');
+        // Очищаем все кэши
+        caches.keys().then((cacheNames) => {
+          cacheNames.forEach((cacheName) => {
+            caches.delete(cacheName);
+          });
+        });
+      });
+    });
+  });
+} else if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  // Регистрация Service Worker только в production режиме
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
       .then((registration) => {

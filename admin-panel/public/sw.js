@@ -81,6 +81,11 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
+  // Пропускаем все запросы в режиме разработки (localhost:5173 - Vite dev server)
+  if (url.hostname === 'localhost' && url.port === '5173') {
+    return; // Не перехватываем запросы к Vite dev server
+  }
+
   // Пропускаем не-GET запросы
   if (request.method !== 'GET') return;
 

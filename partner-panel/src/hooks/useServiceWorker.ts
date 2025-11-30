@@ -23,6 +23,9 @@ export const useServiceWorker = () => {
 
   useEffect(() => {
     if (!swState.isSupported) return;
+    
+    // Не регистрируем Service Worker в режиме разработки
+    if (import.meta.env.DEV) return;
 
     const registerSW = async () => {
       try {
