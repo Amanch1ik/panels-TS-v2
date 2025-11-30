@@ -78,6 +78,31 @@ function App() {
   const { language } = useI18nContext();
   const antdLocale = language === 'en' ? enUS : ruRU; // Для кыргызского пока используем русский
   
+  // Получаем текущую тему для динамического изменения Ant Design темы
+  const [isDark, setIsDark] = React.useState(() => {
+    const savedTheme = localStorage.getItem('admin_panel_theme');
+    return savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  });
+  
+  // Слушаем изменения темы
+  React.useEffect(() => {
+    const observer = new MutationObserver(() => {
+      const theme = document.documentElement.getAttribute('data-theme');
+      setIsDark(theme === 'dark');
+    });
+    
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme'],
+    });
+    
+    // Устанавливаем начальное значение
+    const theme = document.documentElement.getAttribute('data-theme');
+    setIsDark(theme === 'dark');
+    
+    return () => observer.disconnect();
+  }, []);
+  
   // Инициализация системы мониторинга при загрузке приложения
   React.useEffect(() => {
     initializeMonitoring();
@@ -132,14 +157,17 @@ function App() {
         <ConfigProvider
           locale={antdLocale}
           theme={{
+            algorithm: isDark ? undefined : undefined, // Можно использовать theme.darkAlgorithm для темной темы
             token: {
-              colorPrimary: 'var(--color-primary)',
+              colorPrimary: isDark ? '#AEC380' : '#689071',
               borderRadius: 12,
               fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-              colorSuccess: 'var(--color-success)',
-              colorError: 'var(--color-error, #ff4d4f)',
-              colorWarning: 'var(--color-warning, #faad14)',
-              colorInfo: 'var(--color-info, #1890ff)',
+              colorSuccess: '#52c41a',
+              colorError: '#ff4d4f',
+              colorWarning: '#AEC380',
+              colorInfo: '#1890ff',
+              colorBgBase: isDark ? '#0d1a12' : '#ffffff',
+              colorText: isDark ? '#e8f0e3' : '#0F2A1D',
             },
             components: {
               Menu: {

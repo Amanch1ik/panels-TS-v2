@@ -39,6 +39,22 @@ i18n.subscribe(() => {
   applyDayjsLocale(i18n.getLanguage());
 });
 
+// Инициализация темы при загрузке
+const initTheme = () => {
+  const savedTheme = localStorage.getItem('admin_panel_theme');
+  const theme = savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', theme);
+  
+  // Обновляем мета-тег для мобильных браузеров
+  const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+  if (metaThemeColor) {
+    metaThemeColor.setAttribute('content', theme === 'dark' ? '#0d1a12' : '#ffffff');
+  }
+};
+
+// Инициализируем тему сразу при загрузке
+initTheme();
+
 const rootElement = document.getElementById('root');
 if (!rootElement) {
   throw new Error('Root element not found');
