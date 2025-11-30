@@ -6,7 +6,7 @@ import { transactionsApi } from '@/services/api';
 import { toArray } from '../utils/arrayUtils';
 import { t } from '@/i18n';
 import { exportToCSV, exportToExcel, exportToJSON } from '@/utils/exportUtils';
-import dayjs from 'dayjs';
+import { formatDateTime } from '@/utils/dateUtils';
 import '../styles/animations.css';
 
 export const TransactionsPage = () => {
@@ -52,7 +52,7 @@ export const TransactionsPage = () => {
       { key: 'partner_id', title: t('transactions.export.partner', 'Партнер') },
       { key: 'amount', title: t('transactions.export.amount', 'Сумма'), render: (val: number) => `${val.toLocaleString('ru-RU')} Yess!Coin` },
       { key: 'type', title: t('transactions.export.type', 'Тип'), render: (val: string) => getTypeLabel(val) },
-      { key: 'created_at', title: t('transactions.export.date', 'Дата'), render: (val: string) => dayjs(val).format('DD.MM.YYYY HH:mm:ss') },
+      { key: 'created_at', title: t('transactions.export.date', 'Дата'), render: (val: string) => formatDateTime(val) },
     ];
 
     try {
@@ -88,9 +88,9 @@ export const TransactionsPage = () => {
           <Avatar
             icon={<UserOutlined />}
             size={32}
-            style={{ backgroundColor: '#689071' }}
+            style={{ backgroundColor: 'var(--color-primary)' }}
           />
-          <span style={{ color: '#0F2A1D' }}>
+          <span style={{ color: 'var(--color-text-primary)' }}>
             {record.user?.name || `${t('transactions.user', 'Пользователь')} ${record.user_id}`}
           </span>
         </div>
@@ -105,9 +105,9 @@ export const TransactionsPage = () => {
           <Avatar
             icon={<ShopOutlined />}
             size={24}
-            style={{ backgroundColor: '#689071' }}
+            style={{ backgroundColor: 'var(--color-primary)' }}
           />
-          <span style={{ color: '#0F2A1D' }}>
+          <span style={{ color: 'var(--color-text-primary)' }}>
             {record.partner?.name || t('partners.defaultName', 'Глобус')}
           </span>
         </div>
@@ -139,8 +139,8 @@ export const TransactionsPage = () => {
           <Tag
             color={color === '#689071' ? 'success' : color === '#ff4d4f' ? 'error' : 'default'}
             style={{
-              color: color === '#0F2A1D' ? '#0F2A1D' : '#ffffff',
-              border: color === '#0F2A1D' ? '1px solid #d9d9d9' : 'none',
+              color: color === '#0F2A1D' ? 'var(--color-text-primary)' : 'var(--color-text-inverse)',
+              border: color === '#0F2A1D' ? '1px solid var(--color-border)' : 'none',
             }}
           >
             {label}
@@ -153,7 +153,7 @@ export const TransactionsPage = () => {
       dataIndex: 'created_at',
       key: 'created_at',
       width: 180,
-      render: (date: string) => dayjs(date).format('DD.MM.YYYY HH:mm'),
+      render: (date: string) => formatDateTime(date),
     },
   ];
 
@@ -166,7 +166,7 @@ export const TransactionsPage = () => {
   return (
     <div className="fade-in">
       <div style={{ marginBottom: 20 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 600, color: '#0F2A1D', margin: 0 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 600, color: 'var(--color-text-primary)', margin: 0 }}>
           {t('transactions.title', 'Транзакции')}
         </h1>
       </div>
@@ -175,9 +175,9 @@ export const TransactionsPage = () => {
       <Card
         style={{
           borderRadius: 16,
-          background: 'linear-gradient(135deg, #ffffff 0%, #F0F7EB 100%)',
-          border: '1px solid #E3EED4',
-          boxShadow: '0 2px 12px rgba(15, 42, 29, 0.08)',
+          background: 'var(--card-bg)',
+          border: '1px solid var(--card-border)',
+          boxShadow: 'var(--card-shadow)',
           marginBottom: 16,
         }}
         className="hover-lift-green"
@@ -212,7 +212,7 @@ export const TransactionsPage = () => {
             <Button
               type="primary"
               icon={<DownloadOutlined />}
-              style={{ backgroundColor: '#689071', borderColor: '#689071' }}
+              style={{ background: 'var(--color-primary)', borderColor: 'var(--color-primary)' }}
             >
               {t('common.export', 'Экспорт')}
             </Button>
@@ -225,9 +225,9 @@ export const TransactionsPage = () => {
         loading={isLoading}
         style={{
           borderRadius: 16,
-          background: 'linear-gradient(135deg, #ffffff 0%, #F0F7EB 100%)',
-          border: '1px solid #E3EED4',
-          boxShadow: '0 2px 12px rgba(15, 42, 29, 0.08)',
+          background: 'var(--card-bg)',
+          border: '1px solid var(--card-border)',
+          boxShadow: 'var(--card-shadow)',
         }}
         className="hover-lift-green"
       >

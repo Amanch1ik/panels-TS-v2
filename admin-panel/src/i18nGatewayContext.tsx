@@ -25,7 +25,12 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return (
     <I18nContext.Provider value={{ language, setLanguage }}>
-      {children}
+      {/*
+        Важно: используем key=language, чтобы принудительно пересоздавать потомков
+        при смене языка. Это нужно для компонентов, которые не используют
+        сам контекст, но вызывают функцию t(...) напрямую (как в тестах).
+      */}
+      <React.Fragment key={language}>{children}</React.Fragment>
     </I18nContext.Provider>
   );
 };

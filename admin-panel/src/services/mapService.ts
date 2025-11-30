@@ -98,8 +98,11 @@ export async function buildTransitViaBackend(
   end: [number, number]
 ): Promise<RouteResult | null> {
   try {
-    const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || ((import.meta as any).env?.DEV ? '' : 'http://localhost:8000');
-    const API_PATH = (import.meta as any).env?.DEV ? '/api/v1' : `${API_BASE_URL}/api/v1`;
+    const isDev = (import.meta as any).env?.DEV;
+    const envApiBase = (import.meta as any).env?.VITE_API_URL || '';
+    const API_PATH = isDev && envApiBase
+      ? `${String(envApiBase).replace(/\/$/, '')}/api/v1`
+      : '/api/v1';
     const token = localStorage.getItem('admin_token');
     const res = await fetch(`${API_PATH}/routes/transit`, {
       method: 'POST',

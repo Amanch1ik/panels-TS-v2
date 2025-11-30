@@ -62,9 +62,9 @@ export const ReferralsPage = () => {
             src={record.agent.avatar}
             icon={<UserOutlined />}
             size={40}
-            style={{ backgroundColor: '#689071' }}
+            style={{ backgroundColor: 'var(--color-primary)' }}
           />
-          <span style={{ fontWeight: 500, color: '#0F2A1D' }}>
+          <span style={{ fontWeight: 500, color: 'var(--color-text-primary)' }}>
             {record.agent.name}
           </span>
         </div>
@@ -98,7 +98,7 @@ export const ReferralsPage = () => {
       key: 'bonuses',
       width: 150,
       render: (value: number) => (
-        <span style={{ color: '#689071', fontWeight: 600, fontSize: 15 }}>
+        <span style={{ color: 'var(--color-primary)', fontWeight: 600, fontSize: 15 }}>
           {value.toLocaleString()} Y
         </span>
       ),
@@ -137,9 +137,9 @@ export const ReferralsPage = () => {
         loading={isLoading}
         style={{
           borderRadius: 16,
-          background: 'linear-gradient(135deg, #ffffff 0%, #F0F7EB 100%)',
-          border: '1px solid #E3EED4',
-          boxShadow: '0 2px 12px rgba(15, 42, 29, 0.08)',
+          background: 'var(--card-bg)',
+          border: '1px solid var(--card-border)',
+          boxShadow: 'var(--card-shadow)',
         }}
         className="hover-lift-green"
       >

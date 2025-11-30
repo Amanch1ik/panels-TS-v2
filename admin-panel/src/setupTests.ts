@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck
 // Jest setup file
 import '@testing-library/jest-dom';
 

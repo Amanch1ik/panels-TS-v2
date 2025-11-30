@@ -3,14 +3,14 @@ const CACHE_NAME = 'yess-partner-v1.0.0';
 const STATIC_CACHE_NAME = 'yess-partner-static-v1.0.0';
 const API_CACHE_NAME = 'yess-partner-api-v1.0.0';
 
-// Ресурсы для кэширования
+// Ресурсы для кэширования (только существующие файлы)
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/favicon.ico',
-  '/logo192.png',
-  '/logo512.png'
+  '/app-icon.svg',
+  '/logo192.svg',
+  '/logo512.svg'
 ];
 
 // API эндпоинты для кэширования
@@ -27,12 +27,28 @@ self.addEventListener('install', (event) => {
   console.log('[SW] Установка Service Worker');
   event.waitUntil(
     Promise.all([
-      // Кэшируем статические ресурсы
-      caches.open(STATIC_CACHE_NAME).then((cache) => {
+      // Кэшируем статические ресурсы с обработкой ошибок
+      caches.open(STATIC_CACHE_NAME).then(async (cache) => {
         console.log('[SW] Кэширование статических ресурсов');
-        return cache.addAll(STATIC_ASSETS).catch((err) => {
-          console.warn('[SW] Failed to cache some static assets:', err);
+        
+        // Кэшируем файлы по одному, чтобы один неудачный не блокировал остальные
+        const cachePromises = STATIC_ASSETS.map(async (url) => {
+          try {
+            const response = await fetch(url);
+            if (response.ok) {
+              await cache.put(url, response);
+              console.log(`[SW] ✅ Закэширован: ${url}`);
+            } else {
+              console.warn(`[SW] ⚠️ Пропущен (${response.status}): ${url}`);
+            }
+          } catch (error) {
+            // Тихий провал - файл может не существовать
+            console.warn(`[SW] ⚠️ Не удалось закэшировать: ${url}`, error.message);
+          }
         });
+        
+        await Promise.allSettled(cachePromises);
+        console.log('[SW] ✅ Кэширование завершено');
       }),
       // Пропускаем ожидание активации
       self.skipWaiting()
@@ -172,8 +188,8 @@ self.addEventListener('push', (event) => {
     const data = event.data.json();
     const options = {
       body: data.body,
-      icon: '/logo192.png',
-      badge: '/logo192.png',
+      icon: '/logo192.svg',
+      badge: '/logo192.svg',
       vibrate: [100, 50, 100],
       data: {
         dateOfArrival: Date.now(),

@@ -102,7 +102,7 @@ export const PartnerLocationsPage = () => {
   return (
     <div className="fade-in">
       <div style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1 style={{ fontSize: 24, fontWeight: 600, color: '#0F2A1D', margin: 0 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 600, color: 'var(--color-text-primary)', margin: 0 }}>
           {t('partners.locations', 'Локации партнёров')}
         </h1>
       </div>
@@ -110,8 +110,8 @@ export const PartnerLocationsPage = () => {
       <Card
         style={{
           borderRadius: 16,
-          background: 'linear-gradient(135deg, #ffffff 0%, #F0F7EB 100%)',
-          border: '1px solid #E3EED4',
+          background: 'var(--card-bg)',
+          border: '1px solid var(--card-border)',
           marginBottom: 16,
         }}
         className="hover-lift-green"
@@ -173,8 +173,8 @@ export const PartnerLocationsPage = () => {
       <Card
         style={{
           borderRadius: 16,
-          background: 'linear-gradient(135deg, #ffffff 0%, #F0F7EB 100%)',
-          border: '1px solid #E3EED4',
+          background: 'var(--card-bg)',
+          border: '1px solid var(--card-border)',
           marginBottom: 16,
         }}
         className="hover-lift-green"
@@ -201,9 +201,9 @@ export const PartnerLocationsPage = () => {
         <Card
           style={{
             borderRadius: 16,
-            background: 'linear-gradient(135deg, #ffffff 0%, #F0F7EB 100%)',
-            border: '1px solid #E3EED4',
-            boxShadow: '0 2px 12px rgba(15, 42, 29, 0.08)',
+            background: 'var(--card-bg)',
+            border: '1px solid var(--card-border)',
+            boxShadow: 'var(--card-shadow)',
           }}
           className="hover-lift-green"
         >

@@ -4,6 +4,7 @@
 
 import adminApi from './adminApi';
 import axios from 'axios';
+import type { DashboardStats, User, Partner, Promotion, Transaction } from '@/types';
 
 /**
  * Auth API
@@ -130,12 +131,8 @@ export const settingsApi = {
   },
 };
 
-// Экспорт типов для использования в компонентах
-export type DashboardStats = any;
-export type User = any;
-export type Partner = any;
-export type Promotion = any;
-export type Transaction = any;
+// Экспорт типов для использования в компонентах (пробрасываем реальные типы из '@/types')
+export type { DashboardStats, User, Partner, Promotion, Transaction } from '@/types';
 
 // Экспорт основного adminApi для прямого использования если нужно
 export { adminApi };
@@ -153,12 +150,33 @@ const api = {
   notificationsApi,
   auditApi,
   settingsApi,
+  // Прямой доступ к adminApi при необходимости
+  adminApi,
   // Прямой доступ к axios для кастомных запросов
   post: (url: string, data?: any, config?: any) => {
-    const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '' : 'http://localhost:8000');
-    const API_PATH = import.meta.env.DEV ? '/api/v1' : `${API_BASE_URL}/api/v1`;
+    const IS_DEV = import.meta.env.DEV;
+    const ENV_API_BASE = import.meta.env.VITE_API_URL || '';
+    const API_PATH = IS_DEV && ENV_API_BASE
+      ? `${ENV_API_BASE.replace(/\/$/, '')}/api/v1`
+      : '/api/v1';
     const token = localStorage.getItem('admin_token');
     return axios.post(`${API_PATH}${url}`, data, {
+      ...config,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: token ? `Bearer ${token}` : undefined,
+        ...config?.headers,
+      },
+    });
+  },
+  put: (url: string, data?: any, config?: any) => {
+    const IS_DEV = import.meta.env.DEV;
+    const ENV_API_BASE = import.meta.env.VITE_API_URL || '';
+    const API_PATH = IS_DEV && ENV_API_BASE
+      ? `${ENV_API_BASE.replace(/\/$/, '')}/api/v1`
+      : '/api/v1';
+    const token = localStorage.getItem('admin_token');
+    return axios.put(`${API_PATH}${url}`, data, {
       ...config,
       headers: {
         'Content-Type': 'application/json',

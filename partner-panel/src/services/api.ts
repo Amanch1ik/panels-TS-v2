@@ -101,6 +101,15 @@ export const profileApi = {
 };
 
 /**
+ * Notifications API
+ */
+export const notificationsApi = {
+  getNotifications: (params?: { page?: number; limit?: number }) => partnerApi.getNotifications(params),
+  markNotificationAsRead: (id: number) => partnerApi.markNotificationAsRead(id),
+  deleteNotification: (id: number) => partnerApi.deleteNotification(id),
+};
+
+/**
  * Главный экспорт
  */
 export const api = {

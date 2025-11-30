@@ -2,13 +2,14 @@
 
 .main-layout {
   min-height: 100vh;
-  background: linear-gradient(135deg, #F0F7EB 0%, #E3EED4 100%);
+  background: linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-bg-tertiary) 100%);
+  color: var(--color-text-primary);
 }
 
 /* Sidebar */
 .sidebar {
-  background: linear-gradient(180deg, #ffffff 0%, #F0F7EB 100%);
-  box-shadow: 2px 0 12px rgba(15, 42, 29, 0.1);
+  background: linear-gradient(180deg, var(--sidebar-bg) 0%, var(--color-bg-secondary) 100%);
+  box-shadow: var(--shadow-md);
   position: fixed;
   left: 0;
   top: 0;
@@ -16,7 +17,7 @@
   width: 250px;
   z-index: 100;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border-right: 1px solid #E3EED4;
+  border-right: 1px solid var(--color-border);
 }
 
 .sidebar-logo {
@@ -24,8 +25,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #0F2A1D 0%, #375534 100%);
-  color: #ffffff;
+  background: linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 100%);
+  color: var(--color-text-inverse);
   font-size: 28px;
   font-weight: 700;
   border-bottom: none;
@@ -111,7 +112,7 @@
 }
 
 .sidebar-menu .ant-menu-item a {
-  color: #0F2A1D;
+  color: var(--sidebar-text);
   transition: color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   font-weight: 400;
 }
@@ -121,8 +122,8 @@
   bottom: 0;
   left: 0;
   width: 250px;
-  background: linear-gradient(180deg, #F0F7EB 0%, #ffffff 100%);
-  border-top: 1px solid #E3EED4;
+  background: linear-gradient(180deg, var(--color-bg-secondary) 0%, var(--color-bg-primary) 100%);
+  border-top: 1px solid var(--color-border);
   padding: 12px 0;
   z-index: 101;
   box-shadow: 0 -2px 8px rgba(15, 42, 29, 0.05);
@@ -130,20 +131,20 @@
 
 /* Header */
 .main-header {
-  background: linear-gradient(135deg, #ffffff 0%, #F0F7EB 100%);
+  background: linear-gradient(135deg, var(--header-bg) 0%, var(--color-bg-secondary) 100%);
   padding: 0 24px;
   height: 64px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 2px 12px rgba(15, 42, 29, 0.08);
+  box-shadow: var(--shadow-md);
   position: fixed;
   top: 0;
   right: 0;
   left: 250px;
   z-index: 99;
   transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border-bottom: 1px solid #E3EED4;
+  border-bottom: 1px solid var(--header-border);
 }
 
 /* Анимированный поиск */
@@ -160,8 +161,8 @@
 }
 
 .admin-search-input .ant-input {
-  background-color: #ffffff !important;
-  border: 2px solid #E3EED4 !important;
+  background-color: var(--input-bg) !important;
+  border: 2px solid var(--color-border) !important;
   border-radius: 25px !important;
   font-size: 16px !important;
   padding: 12px 50px 12px 20px !important;
@@ -173,17 +174,17 @@
 }
 
 .admin-search-input .ant-input:hover {
-  border-color: #AEC380 !important;
+  border-color: var(--color-border-hover) !important;
   box-shadow: 0 2px 12px rgba(104, 144, 113, 0.15) !important;
 }
 
 .admin-search-input .ant-input:focus {
-  border-color: #689071 !important;
+  border-color: var(--color-primary) !important;
   box-shadow: 0 0 0 3px rgba(104, 144, 113, 0.15) !important;
 }
 
 .admin-search-btn {
-  background: linear-gradient(135deg, #689071 0%, #AEC380 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
   border: none;
   cursor: pointer;
   font-size: 20px;
@@ -203,7 +204,7 @@
 }
 
 .admin-search-btn:hover {
-  background: linear-gradient(135deg, #375534 0%, #689071 100%);
+  background: linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 100%);
   box-shadow: 0 4px 12px rgba(104, 144, 113, 0.4);
   transform: scale(1.05);
 }
@@ -256,7 +257,7 @@
 }
 
 .header-notification:hover {
-  background: linear-gradient(135deg, #E3EED4 0%, #F0F7EB 100%);
+  background: var(--color-bg-hover);
   transform: scale(1.1);
 }
 
@@ -300,14 +301,14 @@
 
 .header-user-name {
   font-weight: 600;
-  color: #0F2A1D;
+  color: var(--color-text-primary);
   font-size: 14px;
   line-height: 1.2;
 }
 
 .header-user-role {
   font-size: 12px;
-  color: #689071;
+  color: var(--color-text-secondary);
   line-height: 1.2;
 }
 

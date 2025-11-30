@@ -68,15 +68,18 @@ export const useAuth = () => {
         const response = await authApi.getCurrentUser();
         console.log('✅ useAuth: Получен ответ от API:', response);
 
-        if (response) {
+        // authApi.getCurrentUser возвращает ApiResponse, поэтому извлекаем data при наличии
+        const payload: any = (response as any)?.data ?? response;
+
+        if (payload) {
           const userData = {
-            id: response.id?.toString() || '',
-            email: response.email || response.phone || '',
-            role: 'admin',
-            username: response.email || response.phone,
-            avatar_url: response.avatar_url,
-            firstName: response.firstName,
-            lastName: response.lastName,
+            id: payload.id?.toString() || '',
+            email: payload.email || payload.phone || '',
+            role: 'admin' as const,
+            username: payload.email || payload.phone,
+            avatar_url: payload.avatar_url,
+            firstName: payload.firstName,
+            lastName: payload.lastName,
           };
           console.log('👤 useAuth: Устанавливаем пользователя:', userData);
           setUser(userData);

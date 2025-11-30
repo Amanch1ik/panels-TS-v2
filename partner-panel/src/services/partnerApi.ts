@@ -1,38 +1,61 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
+import { createMetricsInterceptor, errorLogger } from '../../../shared/monitoring';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+// В dev можно явно указать удалённый backend через VITE_API_URL.
+// В остальных случаях используем относительный путь и прокси (Vite/nginx).
+const IS_DEV = import.meta.env.DEV;
+const ENV_API_BASE = import.meta.env.VITE_API_URL || '';
+
+const API_BASE_URL = IS_DEV && ENV_API_BASE
+  ? ENV_API_BASE.replace(/\/$/, '')
+  : '';
 
 // Создаем экземпляр axios
 const apiClient: AxiosInstance = axios.create({
-  baseURL: `${API_BASE_URL}/api/v1`,
+  baseURL: API_BASE_URL ? `${API_BASE_URL}/api/v1` : '/api/v1',
   headers: {
     'Content-Type': 'application/json',
   },
   timeout: 10000, // 10 секунд таймаут для всех запросов
 });
 
-// Интерцептор для добавления токена
+// Создаем интерцептор метрик для отслеживания API запросов
+const metricsInterceptor = createMetricsInterceptor();
+
+// Интерцептор для добавления токена и метрик
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('partner_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    return config;
+    // Добавляем отслеживание метрик
+    return metricsInterceptor.request(config);
   },
   (error) => {
     return Promise.reject(error);
   }
 );
 
-// Интерцептор для обработки ошибок
+// Интерцептор для обработки ошибок и метрик
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Записываем метрики успешного ответа
+    metricsInterceptor.response(response);
+    return response;
+  },
   (error: AxiosError) => {
     // Расширенная обработка ошибок
     if (error.response) {
       const status = error.response.status;
       const data = error.response.data as any;
+      
+      // Логируем ошибку в систему мониторинга
+      errorLogger.logApiError(
+        error.config?.url || '',
+        status,
+        error
+      );
       
       switch (status) {
         case 401:
@@ -63,8 +86,17 @@ apiClient.interceptors.response.use(
           console.error('Ошибка API:', data?.detail || error.message);
       }
     } else if (error.request) {
-      // Запрос отправлен, но ответа нет
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      // Запрос отправлен, но ответа нет - логируем как сетевую ошибку
+      errorLogger.logError({
+        message: `Network Error: No response from server - ${error.config?.url || 'unknown'}`,
+        source: 'api',
+        additionalData: {
+          url: error.config?.url,
+          method: error.config?.method,
+        },
+      });
+      
+      const apiUrl = (import.meta.env.VITE_API_URL as string | undefined) || 'relative /api/v1';
       console.error(`Нет ответа от сервера. Проверьте подключение к бэкенду: ${apiUrl}`);
       console.error('Возможные причины:');
       console.error('  1. Бэкенд не запущен');
@@ -72,10 +104,19 @@ apiClient.interceptors.response.use(
       console.error('  3. Проблемы с сетью или firewall');
     } else {
       // Ошибка при настройке запроса
+      errorLogger.logError({
+        message: `Request Error: ${error.message}`,
+        source: 'api',
+        additionalData: {
+          url: error.config?.url,
+          method: error.config?.method,
+        },
+      });
       console.error('Ошибка запроса:', error.message);
     }
     
-    return Promise.reject(error);
+    // Записываем метрики ошибки
+    return metricsInterceptor.error(error);
   }
 );
 
@@ -184,181 +225,90 @@ const partnerApi = {
   // Locations
   async getLocations() {
     try {
-      // Партнёрские локации по /partner/locations
-      return await apiClient.get('/partner/locations');
-    } catch {
-      try {
-        const raw = localStorage.getItem('partner_locations');
-        const items = raw ? JSON.parse(raw) : [];
-        return { data: items };
-      } catch {
-        return { data: [] };
-      }
+      const response = await apiClient.get('/partner/locations');
+      return response;
+    } catch (error: any) {
+      console.error('Error fetching locations:', error.response?.data || error.message);
+      // Возвращаем безопасное значение без localStorage fallback
+      return { data: [] };
     }
   },
 
   async createLocation(data: any) {
     try {
       return await apiClient.post('/partner/locations', data);
-    } catch {
-      const raw = localStorage.getItem('partner_locations');
-      const items = raw ? JSON.parse(raw) : [];
-      const id = items.length ? Math.max(...items.map((e: any) => Number(e.id) || 0)) + 1 : 1;
-      const item = {
-        id,
-        key: String(id),
-        name: data.name || 'Новая локация',
-        address: data.address || '',
-        latitude: data.latitude,
-        longitude: data.longitude,
-        createdAt: new Date().toISOString(),
-      };
-      const next = [item, ...items];
-      localStorage.setItem('partner_locations', JSON.stringify(next));
-      return { data: item };
+    } catch (error: any) {
+      console.error('Error creating location:', error.response?.data || error.message);
+      throw error; // Пробрасываем ошибку вместо fallback
     }
   },
 
   async updateLocation(id: number, data: any) {
     try {
       return await apiClient.put(`/partner/locations/${id}`, data);
-    } catch {
-      const raw = localStorage.getItem('partner_locations');
-      const items = raw ? JSON.parse(raw) : [];
-      const idx = items.findIndex((e: any) => Number(e.id) === Number(id));
-      if (idx === -1) {
-        const item = { id, key: String(id), ...data };
-        const next = [item, ...items];
-        localStorage.setItem('partner_locations', JSON.stringify(next));
-        return { data: item };
-      }
-      const nextItem = { ...items[idx], ...data, updatedAt: new Date().toISOString() };
-      const next = [...items];
-      next[idx] = nextItem;
-      localStorage.setItem('partner_locations', JSON.stringify(next));
-      return { data: nextItem };
+    } catch (error: any) {
+      console.error('Error updating location:', error.response?.data || error.message);
+      throw error; // Пробрасываем ошибку вместо fallback
     }
   },
 
   async deleteLocation(id: number) {
     try {
       return await apiClient.delete(`/partner/locations/${id}`);
-    } catch {
-      const raw = localStorage.getItem('partner_locations');
-      const items = raw ? JSON.parse(raw) : [];
-      const next = items.filter((e: any) => Number(e.id) !== Number(id));
-      localStorage.setItem('partner_locations', JSON.stringify(next));
-      return { data: { success: true } as any };
+    } catch (error: any) {
+      console.error('Error deleting location:', error.response?.data || error.message);
+      throw error; // Пробрасываем ошибку вместо fallback
     }
   },
 
-  // Promotions (offline-friendly fallback via localStorage)
+  // Promotions
   async getPromotions() {
     try {
-      // публичный список акций доступен по /promotions
-      return await apiClient.get('/promotions');
-    } catch (error) {
-      try {
-        const raw = localStorage.getItem('partner_promotions');
-        const items = raw ? JSON.parse(raw) : [];
-        return { data: items };
-      } catch {
-        return { data: [] };
-      }
+      const response = await apiClient.get('/promotions');
+      return response;
+    } catch (error: any) {
+      console.error('Error fetching promotions:', error.response?.data || error.message);
+      // Возвращаем безопасное значение без localStorage fallback
+      return { data: [] };
     }
   },
 
   async createPromotion(data: any) {
     try {
       return await apiClient.post('/partner/promotions', data);
-    } catch {
-      const raw = localStorage.getItem('partner_promotions');
-      const items = raw ? JSON.parse(raw) : [];
-      const id = items.length ? Math.max(...items.map((p: any) => Number(p.id) || 0)) + 1 : 1;
-      const now = new Date();
-      // Normalize payload for UI
-      const period = Array.isArray(data.period) && data.period.length === 2
-        ? `${data.period[0]?.format?.('DD.MM.YYYY') || ''} - ${data.period[1]?.format?.('DD.MM.YYYY') || ''}`
-        : (data.period || '');
-      const item = {
-        id,
-        key: String(id),
-        title: data.title,
-        discount: Number(data.discount) || 0,
-        period,
-        partner: data.partner || '—',
-        priority: Number(data.priority) || 0,
-        ctr: Number(data.ctr) || 0,
-        stats: Number(data.stats) || 0,
-        createdAt: now.toISOString(),
-        updatedAt: now.toISOString(),
-      };
-      const next = [item, ...items];
-      localStorage.setItem('partner_promotions', JSON.stringify(next));
-      return { data: item };
+    } catch (error: any) {
+      console.error('Error creating promotion:', error.response?.data || error.message);
+      throw error; // Пробрасываем ошибку вместо fallback
     }
   },
 
   async updatePromotion(id: number, data: any) {
     try {
       return await apiClient.put(`/partner/promotions/${id}`, data);
-    } catch {
-      const raw = localStorage.getItem('partner_promotions');
-      const items = raw ? JSON.parse(raw) : [];
-      const idx = items.findIndex((p: any) => Number(p.id) === Number(id));
-      if (idx === -1) {
-        const item = { id, ...data, key: String(id) };
-        const next = [item, ...items];
-        localStorage.setItem('partner_promotions', JSON.stringify(next));
-        return { data: item };
-      }
-      const period = Array.isArray(data.period) && data.period.length === 2
-        ? `${data.period[0]?.format?.('DD.MM.YYYY') || ''} - ${data.period[1]?.format?.('DD.MM.YYYY') || ''}`
-        : (data.period || items[idx].period);
-      const nextItem = {
-        ...items[idx],
-        ...data,
-        period,
-        updatedAt: new Date().toISOString(),
-      };
-      const next = [...items];
-      next[idx] = nextItem;
-      localStorage.setItem('partner_promotions', JSON.stringify(next));
-      return { data: nextItem };
+    } catch (error: any) {
+      console.error('Error updating promotion:', error.response?.data || error.message);
+      throw error; // Пробрасываем ошибку вместо fallback
     }
   },
 
   async deletePromotion(id: number) {
     try {
       return await apiClient.delete(`/partner/promotions/${id}`);
-    } catch {
-      const raw = localStorage.getItem('partner_promotions');
-      const items = raw ? JSON.parse(raw) : [];
-      const next = items.filter((p: any) => Number(p.id) !== Number(id));
-      localStorage.setItem('partner_promotions', JSON.stringify(next));
-      return { data: { success: true } as any };
+    } catch (error: any) {
+      console.error('Error deleting promotion:', error.response?.data || error.message);
+      throw error; // Пробрасываем ошибку вместо fallback
     }
   },
 
   // Transactions
   async getTransactions(params?: { page?: number; limit?: number; start_date?: string; end_date?: string }) {
     try {
-      console.log('🔍 partnerApi.getTransactions: Отправка запроса к /partner/transactions с параметрами:', params);
       const response = await apiClient.get('/partner/transactions', { params });
-      console.log('✅ partnerApi.getTransactions: Успешно получены транзакции:', response.data);
       return response;
     } catch (error: any) {
-      console.error('❌ partnerApi.getTransactions: Ошибка API:', error.response?.data || error.message);
-
-      // Fallback to mock data
-      console.log('🔄 partnerApi.getTransactions: Использование мок данных');
-      try {
-        const raw = localStorage.getItem('partner_transactions');
-        const items = raw ? JSON.parse(raw) : [];
-        return { data: items };
-      } catch {
-        return { data: [] };
-      }
+      console.error('Error fetching transactions:', error.response?.data || error.message);
+      // Возвращаем безопасное значение без localStorage fallback
+      return { data: [] };
     }
   },
 
@@ -366,77 +316,42 @@ const partnerApi = {
     return apiClient.get(`/partner/transactions/${id}`);
   },
 
-  // Employees (offline-friendly fallback via localStorage)
+  // Employees
   async getEmployees() {
     try {
-      return await apiClient.get('/partner/employees');
-    } catch {
-      try {
-        const raw = localStorage.getItem('partner_employees');
-        const items = raw ? JSON.parse(raw) : [];
-        return { data: items };
-      } catch {
-        return { data: [] };
-      }
+      const response = await apiClient.get('/partner/employees');
+      return response;
+    } catch (error: any) {
+      console.error('Error fetching employees:', error.response?.data || error.message);
+      // Возвращаем безопасное значение без localStorage fallback
+      return { data: [] };
     }
   },
 
   async createEmployee(data: any) {
     try {
       return await apiClient.post('/partner/employees', data);
-    } catch {
-      const raw = localStorage.getItem('partner_employees');
-      const items = raw ? JSON.parse(raw) : [];
-      const id = items.length ? Math.max(...items.map((e: any) => Number(e.id) || 0)) + 1 : 1;
-      const item = {
-        id,
-        key: String(id),
-        name: data.name,
-        role: data.role,
-        location: data.location,
-        action: data.action || 'reset',
-        createdAt: new Date().toISOString(),
-      };
-      const next = [item, ...items];
-      localStorage.setItem('partner_employees', JSON.stringify(next));
-      return { data: item };
+    } catch (error: any) {
+      console.error('Error creating employee:', error.response?.data || error.message);
+      throw error; // Пробрасываем ошибку вместо fallback
     }
   },
 
   async updateEmployee(id: number, data: any) {
     try {
       return await apiClient.put(`/partner/employees/${id}`, data);
-    } catch {
-      const raw = localStorage.getItem('partner_employees');
-      const items = raw ? JSON.parse(raw) : [];
-      const idx = items.findIndex((e: any) => Number(e.id) === Number(id));
-      if (idx === -1) {
-        const item = { id, key: String(id), ...data };
-        const next = [item, ...items];
-        localStorage.setItem('partner_employees', JSON.stringify(next));
-        return { data: item };
-      }
-      const nextItem = {
-        ...items[idx],
-        ...data,
-        updatedAt: new Date().toISOString(),
-      };
-      const next = [...items];
-      next[idx] = nextItem;
-      localStorage.setItem('partner_employees', JSON.stringify(next));
-      return { data: nextItem };
+    } catch (error: any) {
+      console.error('Error updating employee:', error.response?.data || error.message);
+      throw error; // Пробрасываем ошибку вместо fallback
     }
   },
 
   async deleteEmployee(id: number) {
     try {
       return await apiClient.delete(`/partner/employees/${id}`);
-    } catch {
-      const raw = localStorage.getItem('partner_employees');
-      const items = raw ? JSON.parse(raw) : [];
-      const next = items.filter((e: any) => Number(e.id) !== Number(id));
-      localStorage.setItem('partner_employees', JSON.stringify(next));
-      return { data: { success: true } as any };
+    } catch (error: any) {
+      console.error('Error deleting employee:', error.response?.data || error.message);
+      throw error; // Пробрасываем ошибку вместо fallback
     }
   },
 
@@ -451,6 +366,26 @@ const partnerApi = {
 
   async createInvoice(data: any) {
     return apiClient.post('/partner/billing/invoices', data);
+  },
+
+  // Tax rules (optional, may be not implemented on backend)
+  async getTaxRules() {
+    try {
+      return await apiClient.get('/partner/tax-rules');
+    } catch {
+      // если endpoint отсутствует или оффлайн — возвращаем пустой список,
+      // чтобы UI корректно отрисовался без падения
+      return { data: [] };
+    }
+  },
+
+  // Shipping methods (optional, may be not implemented on backend)
+  async getShippingMethods() {
+    try {
+      return await apiClient.get('/partner/shipping-methods');
+    } catch {
+      return { data: [] };
+    }
   },
 
   // Integrations
@@ -487,6 +422,37 @@ const partnerApi = {
         'Content-Type': 'multipart/form-data',
       },
     });
+  },
+
+  // Notifications
+  async getNotifications(params?: { page?: number; limit?: number }) {
+    try {
+      // Используем endpoint для текущего пользователя
+      const response = await apiClient.get('/notifications/me', { params });
+      return response;
+    } catch (error: any) {
+      console.error('Error fetching notifications:', error.response?.data || error.message);
+      // Возвращаем безопасное значение без fallback
+      return { data: [] };
+    }
+  },
+
+  async markNotificationAsRead(id: number) {
+    try {
+      return await apiClient.put(`/notifications/${id}/read`);
+    } catch (error: any) {
+      console.error('Error marking notification as read:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  async deleteNotification(id: number) {
+    try {
+      return await apiClient.delete(`/notifications/${id}`);
+    } catch (error: any) {
+      console.error('Error deleting notification:', error.response?.data || error.message);
+      throw error;
+    }
   },
 };
 

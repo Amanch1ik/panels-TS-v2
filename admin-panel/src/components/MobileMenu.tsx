@@ -12,6 +12,7 @@ import {
   AuditOutlined,
   EnvironmentOutlined,
   PlayCircleOutlined,
+  BarChartOutlined,
 } from '@ant-design/icons';
 import { t } from '@/i18n';
 
@@ -78,6 +79,11 @@ export const MobileMenu = ({ open, onClose }: MobileMenuProps) => {
       key: '/audit',
       icon: <AuditOutlined />,
       label: <Link to="/audit" onClick={onClose}>{t('nav.audit')}</Link>,
+    },
+    {
+      key: '/monitoring',
+      icon: <BarChartOutlined />,
+      label: <Link to="/monitoring" onClick={onClose}>{t('nav.monitoring', 'Мониторинг')}</Link>,
     },
   ];
 

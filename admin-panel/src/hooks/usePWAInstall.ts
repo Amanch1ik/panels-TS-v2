@@ -1,5 +1,15 @@
 import { useState, useEffect } from 'react';
 
+// Локальное описание BeforeInstallPromptEvent, так как оно отсутствует в стандартных DOM-типах
+interface BeforeInstallPromptEvent extends Event {
+  readonly platforms: string[];
+  readonly userChoice: Promise<{
+    outcome: 'accepted' | 'dismissed';
+    platform: string;
+  }>;
+  prompt(): Promise<void>;
+}
+
 interface PWAInstallState {
   isInstallable: boolean;
   isInstalled: boolean;

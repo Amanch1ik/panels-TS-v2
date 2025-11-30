@@ -1,6 +1,7 @@
 import { Drawer, List, Badge, Empty, Button, Space } from 'antd';
 import { BellOutlined, CheckOutlined, DeleteOutlined } from '@ant-design/icons';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { t } from '@/i18n';
 
 interface Notification {
   id: string;
@@ -19,6 +20,11 @@ interface NotificationCenterProps {
 
 export const NotificationCenter = ({ open, onClose, notifications = [] }: NotificationCenterProps) => {
   const [localNotifications, setLocalNotifications] = useState<Notification[]>(notifications);
+
+  // Обновляем локальное состояние при изменении пропсов (новые данные с сервера)
+  useEffect(() => {
+    setLocalNotifications(notifications);
+  }, [notifications]);
 
   const markAsRead = (id: string) => {
     setLocalNotifications(prev =>
@@ -41,15 +47,22 @@ export const NotificationCenter = ({ open, onClose, notifications = [] }: Notifi
       title={
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Space>
-            <BellOutlined style={{ color: '#689071' }} />
-            <span style={{ fontWeight: 600, color: '#0F2A1D' }}>Уведомления</span>
+            <BellOutlined style={{ color: 'var(--color-primary)' }} />
+            <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>
+              {t('notifications.title', 'Уведомления')}
+            </span>
             {unreadCount > 0 && (
-              <Badge count={unreadCount} style={{ backgroundColor: '#689071' }} />
+              <Badge count={unreadCount} style={{ backgroundColor: 'var(--color-primary)' }} />
             )}
           </Space>
           {unreadCount > 0 && (
-            <Button type="link" size="small" onClick={markAllAsRead} style={{ color: '#689071' }}>
-              Отметить все как прочитанные
+            <Button
+              type="link"
+              size="small"
+              onClick={markAllAsRead}
+              style={{ color: 'var(--color-primary)' }}
+            >
+              {t('notifications.markAllRead', 'Отметить все как прочитанные')}
             </Button>
           )}
         </div>
@@ -59,12 +72,12 @@ export const NotificationCenter = ({ open, onClose, notifications = [] }: Notifi
       open={open}
       width={400}
       style={{
-        background: 'linear-gradient(135deg, #F0F7EB 0%, #E3EED4 100%)',
+        background: 'linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-bg-tertiary) 100%)',
       }}
     >
       {localNotifications.length === 0 ? (
         <Empty
-          description="Нет уведомлений"
+          description={t('notifications.empty', 'Нет уведомлений')}
           image={Empty.PRESENTED_IMAGE_SIMPLE}
           style={{ marginTop: 60 }}
         />
@@ -74,11 +87,13 @@ export const NotificationCenter = ({ open, onClose, notifications = [] }: Notifi
           renderItem={(item) => (
             <List.Item
               style={{
-                background: item.read ? '#ffffff' : '#F0F7EB',
+                background: item.read ? 'var(--color-bg-primary)' : 'var(--color-bg-secondary)',
                 borderRadius: 12,
                 marginBottom: 8,
                 padding: '12px 16px',
-                border: `1px solid ${item.read ? '#E3EED4' : '#AEC380'}`,
+                border: `1px solid ${
+                  item.read ? 'var(--color-border)' : 'var(--color-border-hover)'
+                }`,
                 transition: 'all 0.3s',
               }}
               actions={[
@@ -87,7 +102,7 @@ export const NotificationCenter = ({ open, onClose, notifications = [] }: Notifi
                     type="text"
                     icon={<CheckOutlined />}
                     onClick={() => markAsRead(item.id)}
-                    style={{ color: '#689071' }}
+                    style={{ color: 'var(--color-primary)' }}
                   />
                 ),
                 <Button
@@ -101,18 +116,23 @@ export const NotificationCenter = ({ open, onClose, notifications = [] }: Notifi
               <List.Item.Meta
                 title={
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontWeight: item.read ? 400 : 600, color: '#0F2A1D' }}>
+                    <span
+                      style={{
+                        fontWeight: item.read ? 400 : 600,
+                        color: 'var(--color-text-primary)',
+                      }}
+                    >
                       {item.title}
                     </span>
-                    {!item.read && (
-                      <Badge dot style={{ backgroundColor: '#689071' }} />
-                    )}
+                    {!item.read && <Badge dot style={{ backgroundColor: 'var(--color-primary)' }} />}
                   </div>
                 }
                 description={
                   <div>
-                    <div style={{ color: '#689071', fontSize: 13 }}>{item.message}</div>
-                    <div style={{ color: '#AEC380', fontSize: 11, marginTop: 4 }}>
+                    <div style={{ color: 'var(--color-text-secondary)', fontSize: 13 }}>
+                      {item.message}
+                    </div>
+                    <div style={{ color: 'var(--color-text-tertiary)', fontSize: 11, marginTop: 4 }}>
                       {item.timestamp}
                     </div>
                   </div>

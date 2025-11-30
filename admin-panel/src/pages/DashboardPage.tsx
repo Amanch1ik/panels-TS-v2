@@ -15,10 +15,10 @@ import {
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, Legend } from 'recharts';
 import { toArray } from '../utils/arrayUtils';
 import { analyticsApi, transactionsApi } from '@/services/api';
-import type { CalendarProps, RangePickerProps } from 'antd';
+import type { CalendarProps } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
-import 'dayjs/locale/ru';
 import { t } from '@/i18n';
+import { formatDate } from '@/utils/dateUtils';
 import { QuickActions } from '@/components/QuickActions';
 import { RecentActivity } from '@/components/RecentActivity';
 import { connectWebSocket, wsService } from '@/services/websocket';
@@ -62,19 +62,19 @@ export const DashboardPage = () => {
     // Подписка на обновления транзакций
     const unsubscribeTransactions = wsService.on('transaction', (data) => {
       // Обновляем кэш транзакций при получении новых данных
-      queryClient.invalidateQueries(['recent-transactions']);
-      queryClient.invalidateQueries(['transactions']);
-      queryClient.invalidateQueries(['dashboard-stats']);
+      queryClient.invalidateQueries({ queryKey: ['recent-transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
     });
 
     // Подписка на обновления пользователей
     const unsubscribeUsers = wsService.on('user_update', (data) => {
-      queryClient.invalidateQueries(['dashboard-stats']);
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
     });
 
     // Подписка на обновления партнеров
     const unsubscribePartners = wsService.on('partner_update', (data) => {
-      queryClient.invalidateQueries(['dashboard-stats']);
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
     });
 
     // Подписка на уведомления
@@ -122,8 +122,9 @@ export const DashboardPage = () => {
     queryKey: ['recent-transactions'],
     queryFn: async () => {
       try {
-        const res = await transactionsApi.getAll({ page_size: 5 });
-        return res?.data || [];
+        const res = await transactionsApi.getAll(1, 5);
+        const payload: any = (res as any)?.data ?? res;
+        return payload?.items ?? payload ?? [];
       } catch (error) {
         console.error('Error fetching recent transactions:', error);
         return [];
@@ -140,8 +141,9 @@ export const DashboardPage = () => {
     queryKey: ['transactions', dateRangeString],
     queryFn: async () => {
       try {
-        const response = await transactionsApi.getAll({ page_size: 1000 });
-        const rawArray = response?.data?.items ?? response?.items ?? [];
+        const response = await transactionsApi.getAll(1, 1000);
+        const payload: any = (response as any)?.data ?? response;
+        const rawArray = payload?.items ?? payload ?? [];
         return toArray<any>(rawArray, []);
       } catch (error) {
         console.error('Error fetching transactions:', error);
@@ -159,8 +161,8 @@ export const DashboardPage = () => {
     const inactive = (stats.total_users || 0) - active;
     if (active === 0 && inactive === 0) return [];
     return [
-      { name: 'Активные', value: active, color: '#689071' },
-      { name: 'Не активные', value: inactive, color: '#ff4d4f' },
+      { name: t('users.active', 'Активные'), value: active, color: 'var(--color-primary)' },
+      { name: t('users.inactive', 'Не активные'), value: inactive, color: 'var(--color-error)' },
     ];
   }, [stats]);
 
@@ -193,17 +195,17 @@ export const DashboardPage = () => {
       });
 
       // Создаем массив данных для графика
-      const result: Array<{ day: string; value: number; date: string }> = [];
+      const result: Array<{ day: string; value: number; date: string; dateLabel: string }> = [];
       let currentDate = startDate;
-      const dayNames = ['ВС', 'ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ'];
 
       while (currentDate.isBefore(endDate) || currentDate.isSame(endDate, 'day')) {
         const dateKey = currentDate.format('YYYY-MM-DD');
-        const dayName = dayNames[currentDate.day()];
+        const dayName = currentDate.format('dd');
         result.push({
           day: dayName,
           value: daysMap.get(dateKey) || 0,
           date: dateKey,
+          dateLabel: formatDate(currentDate.toDate()),
         });
         currentDate = currentDate.add(1, 'day');
       }
@@ -281,7 +283,7 @@ export const DashboardPage = () => {
           ? "Бэкенд возвращает ошибку 500. Убедитесь, что исправления DateTime применены и бэкенд перезапущен." 
           : undefined}
         onRetry={() => {
-          queryClient.invalidateQueries(['dashboard-stats']);
+          queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
           toast.info('Повторная попытка загрузки данных...');
         }}
       />
@@ -349,16 +351,16 @@ export const DashboardPage = () => {
             className="hover-lift-green scale-in animate-delay-100"
             style={{ 
               borderRadius: 16,
-              background: 'linear-gradient(135deg, #ffffff 0%, #F0F7EB 100%)',
-              border: '1px solid #E3EED4',
-              boxShadow: '0 2px 12px rgba(15, 42, 29, 0.08)',
+              background: 'var(--card-bg)',
+              border: '1px solid var(--card-border)',
+              boxShadow: 'var(--card-shadow)',
             }}
           >
             <Statistic
-              title={<span style={{ color: '#689071', fontWeight: 500 }}>{t('dashboard.users', 'Пользователи')}</span>}
+              title={<span style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>{t('dashboard.users', 'Пользователи')}</span>}
               value={stats?.total_users || 0}
-              prefix={<UserOutlined style={{ color: '#689071', fontSize: 20 }} />}
-              valueStyle={{ color: '#0F2A1D', fontWeight: 700, fontSize: 28 }}
+              prefix={<UserOutlined style={{ color: 'var(--color-primary)', fontSize: 20 }} />}
+              valueStyle={{ color: 'var(--color-text-primary)', fontWeight: 700, fontSize: 28 }}
             />
           </Card>
         </Col>
@@ -367,16 +369,16 @@ export const DashboardPage = () => {
             className="hover-lift-green scale-in animate-delay-200"
             style={{ 
               borderRadius: 16,
-              background: 'linear-gradient(135deg, #ffffff 0%, #F0F7EB 100%)',
-              border: '1px solid #E3EED4',
-              boxShadow: '0 2px 12px rgba(15, 42, 29, 0.08)',
+              background: 'var(--card-bg)',
+              border: '1px solid var(--card-border)',
+              boxShadow: 'var(--card-shadow)',
             }}
           >
             <Statistic
-              title={<span style={{ color: '#689071', fontWeight: 500 }}>{t('dashboard.partners', 'Партнеры')}</span>}
+              title={<span style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>{t('dashboard.partners', 'Партнеры')}</span>}
               value={stats?.active_partners || stats?.total_partners || 0}
-              prefix={<ShopOutlined style={{ color: '#689071', fontSize: 20 }} />}
-              valueStyle={{ color: '#0F2A1D', fontWeight: 700, fontSize: 28 }}
+              prefix={<ShopOutlined style={{ color: 'var(--color-primary)', fontSize: 20 }} />}
+              valueStyle={{ color: 'var(--color-text-primary)', fontWeight: 700, fontSize: 28 }}
             />
           </Card>
         </Col>
@@ -385,24 +387,24 @@ export const DashboardPage = () => {
             className="hover-lift-green scale-in animate-delay-300"
             style={{ 
               borderRadius: 16,
-              background: 'linear-gradient(135deg, #ffffff 0%, #F0F7EB 100%)',
-              border: '1px solid #E3EED4',
-              boxShadow: '0 2px 12px rgba(15, 42, 29, 0.08)',
+              background: 'var(--card-bg)',
+              border: '1px solid var(--card-border)',
+              boxShadow: 'var(--card-shadow)',
             }}
           >
             <Statistic
-              title={<span style={{ color: '#689071', fontWeight: 500 }}>{t('dashboard.yessCoin', 'Yess!Coin')}</span>}
+              title={<span style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>{t('dashboard.yessCoin', 'Yess!Coin')}</span>}
               value={stats?.total_yess_coin || 0}
-              prefix={<DollarOutlined style={{ color: '#689071', fontSize: 20 }} />}
+              prefix={<DollarOutlined style={{ color: 'var(--color-primary)', fontSize: 20 }} />}
               suffix=" Yess!Coin"
               formatter={(value) => {
                 const num = Number(value);
                 if (num >= 1000000) {
                   return `${(num / 1000000).toFixed(1)} млн`;
                 }
-                return num.toLocaleString('ru-RU');
+                return num.toLocaleString();
               }}
-              valueStyle={{ color: '#0F2A1D', fontWeight: 700, fontSize: 28 }}
+              valueStyle={{ color: 'var(--color-text-primary)', fontWeight: 700, fontSize: 28 }}
             />
           </Card>
         </Col>
@@ -411,16 +413,16 @@ export const DashboardPage = () => {
             className="hover-lift-green scale-in animate-delay-400"
             style={{ 
               borderRadius: 16,
-              background: 'linear-gradient(135deg, #ffffff 0%, #F0F7EB 100%)',
-              border: '1px solid #E3EED4',
-              boxShadow: '0 2px 12px rgba(15, 42, 29, 0.08)',
+              background: 'var(--card-bg)',
+              border: '1px solid var(--card-border)',
+              boxShadow: 'var(--card-shadow)',
             }}
           >
             <Statistic
-              title={<span style={{ color: '#689071', fontWeight: 500 }}>{t('dashboard.transactions', 'Транзакции')}</span>}
+              title={<span style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>{t('dashboard.transactions', 'Транзакции')}</span>}
               value={stats?.total_transactions || 0}
-              prefix={<TransactionOutlined style={{ color: '#689071', fontSize: 20 }} />}
-              valueStyle={{ color: '#0F2A1D', fontWeight: 700, fontSize: 28 }}
+              prefix={<TransactionOutlined style={{ color: 'var(--color-primary)', fontSize: 20 }} />}
+              valueStyle={{ color: 'var(--color-text-primary)', fontWeight: 700, fontSize: 28 }}
             />
           </Card>
         </Col>
@@ -432,15 +434,15 @@ export const DashboardPage = () => {
           <Card 
             title={
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontWeight: 600, color: '#0F2A1D' }}>{t('dashboard.users', 'Пользователи')} ({t('dashboard.week', 'Это неделя')})</span>
+                <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{t('dashboard.users', 'Пользователи')} ({t('dashboard.week', 'Это неделя')})</span>
               </div>
             }
             className="hover-lift-green grow"
             style={{ 
               borderRadius: 16,
-              background: 'linear-gradient(135deg, #ffffff 0%, #F0F7EB 100%)',
-              border: '1px solid #E3EED4',
-              boxShadow: '0 2px 12px rgba(15, 42, 29, 0.08)',
+              background: 'var(--card-bg)',
+              border: '1px solid var(--card-border)',
+              boxShadow: 'var(--card-shadow)',
             }}
           >
             {userData.length > 0 ? (
@@ -472,7 +474,7 @@ export const DashboardPage = () => {
                   {userData.map((entry) => (
                     <div key={entry.name} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <div style={{ width: 12, height: 12, borderRadius: '50%', background: entry.color, boxShadow: `0 0 4px ${entry.color}40` }} />
-                      <span style={{ color: '#0F2A1D' }}>
+                      <span style={{ color: 'var(--color-text-primary)' }}>
                         {entry.name} - {entry.value >= 1000 ? `${(entry.value / 1000).toFixed(0)}K` : entry.value}
                       </span>
                     </div>
@@ -480,7 +482,7 @@ export const DashboardPage = () => {
                 </div>
               </>
             ) : (
-              <div style={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#689071' }}>
+              <div style={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-secondary)' }}>
                 <div style={{ textAlign: 'center' }}>
                   <UserOutlined style={{ fontSize: 48, marginBottom: 16, opacity: 0.5 }} />
                   <p>{t('dashboard.noUsers', 'Нет данных о пользователях')}</p>
@@ -493,10 +495,10 @@ export const DashboardPage = () => {
           <Card 
             title={
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-                <span style={{ fontWeight: 600, color: '#0F2A1D' }}>
+                <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>
                   {t('dashboard.transactions', 'Транзакции')}
                   {dateRange?.[0] && dateRange?.[1] && (
-                    <span style={{ fontSize: 14, fontWeight: 400, color: '#689071', marginLeft: 8 }}>
+                    <span style={{ fontSize: 14, fontWeight: 400, color: 'var(--color-text-secondary)', marginLeft: 8 }}>
                       ({dateRange[0].format('DD.MM')} - {dateRange[1].format('DD.MM.YYYY')})
                     </span>
                   )}
@@ -521,35 +523,35 @@ export const DashboardPage = () => {
             className="hover-lift-green grow"
             style={{ 
               borderRadius: 16,
-              background: 'linear-gradient(135deg, #ffffff 0%, #F0F7EB 100%)',
-              border: '1px solid #E3EED4',
-              boxShadow: '0 2px 12px rgba(15, 42, 29, 0.08)',
+              background: 'var(--card-bg)',
+              border: '1px solid var(--card-border)',
+              boxShadow: 'var(--card-shadow)',
             }}
           >
             {transactionData.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={transactionData} className="fade-in-up">
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E3EED4" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
                   <XAxis 
                     dataKey="day" 
-                    stroke="#689071"
-                    tick={{ fill: '#689071', fontSize: 12 }}
+                    stroke="var(--color-primary)"
+                    tick={{ fill: 'var(--color-text-secondary)', fontSize: 12 }}
                   />
                   <YAxis 
-                    stroke="#689071"
-                    tick={{ fill: '#689071', fontSize: 12 }}
+                    stroke="var(--color-primary)"
+                    tick={{ fill: 'var(--color-text-secondary)', fontSize: 12 }}
                   />
                   <Tooltip 
                     contentStyle={{ 
                       borderRadius: 12,
-                      border: '1px solid #E3EED4',
-                      background: '#ffffff',
+                      border: '1px solid var(--color-border)',
+                      background: 'var(--color-bg-primary)',
                     }}
                     formatter={(value: any, name: any, props: any) => [
                       `${value} ${t('dashboard.transactions', 'транзакций')}`,
-                      props.payload.date || ''
+                      props.payload.dateLabel || props.payload.date || ''
                     ]}
-                    labelFormatter={(label) => `День: ${label}`}
+                    labelFormatter={(label) => `${t('dashboard.day', 'День')}: ${label}`}
                   />
                   <Bar 
                     dataKey="value" 
@@ -561,15 +563,15 @@ export const DashboardPage = () => {
                   >
                     <defs>
                       <linearGradient id="colorGradientTransactions" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#689071" stopOpacity={1}/>
-                        <stop offset="100%" stopColor="#AEC380" stopOpacity={1}/>
+                        <stop offset="0%" stopColor="var(--color-primary)" stopOpacity={1}/>
+                        <stop offset="100%" stopColor="var(--color-primary-light)" stopOpacity={1}/>
                       </linearGradient>
                     </defs>
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div style={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#689071' }}>
+              <div style={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-secondary)' }}>
                 <div style={{ textAlign: 'center' }}>
                   <CalendarOutlined style={{ fontSize: 48, marginBottom: 16, opacity: 0.5 }} />
                   <p>{t('dashboard.noTransactions', 'Нет данных за выбранный период')}</p>
@@ -586,46 +588,47 @@ export const DashboardPage = () => {
           <Card 
             title={
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                <span style={{ fontWeight: 600, color: '#0F2A1D' }}>{t('dashboard.activeUsers', 'Активные пользователи')}</span>
+                <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{t('dashboard.activeUsers', 'Активные пользователи')}</span>
                 {stats?.active_users && (
-                  <span style={{ fontSize: 20, fontWeight: 'bold', color: '#689071' }}>
-                    {stats.active_users.toLocaleString('ru-RU')}
+                  <span style={{ fontSize: 20, fontWeight: 'bold', color: 'var(--color-text-secondary)' }}>
+                    {stats.active_users.toLocaleString()}
                   </span>
                 )}
               </div>
             }
-            extra={<MoreOutlined style={{ cursor: 'pointer', color: '#689071' }} />}
+            extra={<MoreOutlined style={{ cursor: 'pointer', color: 'var(--color-primary)' }} />}
             className="hover-lift-green grow"
             style={{ 
               borderRadius: 16,
-              background: 'linear-gradient(135deg, #ffffff 0%, #F0F7EB 100%)',
-              border: '1px solid #E3EED4',
-              boxShadow: '0 2px 12px rgba(15, 42, 29, 0.08)',
+              background: 'var(--card-bg)',
+              border: '1px solid var(--card-border)',
+              boxShadow: 'var(--card-shadow)',
             }}
           >
             {activeUsersData.length > 0 ? (
               <ResponsiveContainer width="100%" height={200}>
                 <AreaChart data={activeUsersData} className="fade-in-up">
-                  <defs>
+                    <defs>
                     <linearGradient id="colorActive" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#689071" stopOpacity={0.8} />
-                      <stop offset="95%" stopColor="#AEC380" stopOpacity={0} />
+                      <stop offset="5%" stopColor="var(--color-primary)" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="var(--color-primary-light)" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E3EED4" />
-                  <XAxis dataKey="time" stroke="#689071" />
-                  <YAxis stroke="#689071" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
+                  <XAxis dataKey="time" stroke="var(--color-primary)" tick={{ fill: 'var(--color-text-secondary)' }} />
+                  <YAxis stroke="var(--color-primary)" tick={{ fill: 'var(--color-text-secondary)' }} />
                   <Tooltip 
                     contentStyle={{ 
                       borderRadius: 12,
-                      border: '1px solid #E3EED4',
-                      background: '#ffffff',
+                      border: '1px solid var(--color-border)',
+                      background: 'var(--chart-tooltip-bg)',
+                      color: 'var(--color-text-primary)',
                     }}
                   />
                   <Area 
                     type="monotone" 
                     dataKey="value" 
-                    stroke="#689071" 
+                    stroke="var(--color-primary)" 
                     strokeWidth={2}
                     fillOpacity={1} 
                     fill="url(#colorActive)"
@@ -636,7 +639,7 @@ export const DashboardPage = () => {
                 </AreaChart>
               </ResponsiveContainer>
             ) : (
-              <div style={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#689071' }}>
+              <div style={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-secondary)' }}>
                 <div style={{ textAlign: 'center' }}>
                   <UserOutlined style={{ fontSize: 48, marginBottom: 16, opacity: 0.5 }} />
                   <p>{t('dashboard.noActiveUsers', 'Нет данных об активных пользователях')}</p>
@@ -650,9 +653,9 @@ export const DashboardPage = () => {
             className="hover-lift-green grow"
             style={{ 
               borderRadius: 16,
-              background: 'linear-gradient(135deg, #ffffff 0%, #F0F7EB 100%)',
-              border: '1px solid #E3EED4',
-              boxShadow: '0 2px 12px rgba(15, 42, 29, 0.08)',
+              background: 'var(--card-bg)',
+              border: '1px solid var(--card-border)',
+              boxShadow: 'var(--card-shadow)',
             }}
           >
             <Calendar 

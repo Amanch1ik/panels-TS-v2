@@ -18,7 +18,6 @@ import { connectWebSocket, wsService } from '../services/websocket';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { t } from '@/i18n';
-import partnerApi from '@/services/partnerApi';
 
 // Цвета для графиков
 const CHART_COLORS = ['#689071', '#AEC380', '#375534', '#E3EED4', '#0F2A1D'];
@@ -55,34 +54,23 @@ export const DashboardPage = () => {
     };
   }, [queryClient]);
 
-  // Загрузка статистики
+  // Загрузка статистики с оптимизированными настройками
   const { data: stats, isLoading: statsLoading, refetch: refetchStats } = useQuery({
     queryKey: ['dashboardStats'],
     queryFn: async () => {
       const response = await dashboardApi.getStats();
       return response.data;
     },
+    staleTime: 60 * 1000, // 1 минута - данные считаются свежими (увеличено)
+    gcTime: 5 * 60 * 1000, // 5 минут в кэше
     retry: 1,
-    refetchInterval: 30000,
+    refetchInterval: false, // Отключаем автоматическое обновление - используем WebSocket для real-time
+    refetchIntervalInBackground: false,
+    refetchOnMount: false, // Не перезапрашивать при монтировании если данные свежие
+    refetchOnWindowFocus: false, // Не перезапрашивать при фокусе
   });
 
-  // Загрузка данных для графиков
-  const { data: chartData, isLoading: chartLoading } = useQuery({
-    queryKey: ['chartData', chartPeriod],
-    queryFn: async () => {
-      try {
-        const response = await partnerApi.getDashboardCharts(parseInt(chartPeriod));
-        return response.data;
-      } catch (error) {
-        // Если API не поддерживает charts, генерируем демо-данные на основе stats
-        return generateChartData(stats, parseInt(chartPeriod));
-      }
-    },
-    retry: 1,
-    enabled: !!stats,
-  });
-
-  // Генерация данных для графиков на основе статистики
+  // Хэлпер генерации данных для графиков на основе статистики
   const generateChartData = (stats: any, days: number) => {
     let generatedSalesData: any[] = [];
     const now = new Date();
@@ -95,7 +83,7 @@ export const DashboardPage = () => {
         transactions: item.transactions || item.count || 0,
       }));
     } else {
-      // Если данных нет, создаем пустой массив
+      // Если данных нет, создаем пустой массив на нужное количество дней
       for (let i = days - 1; i >= 0; i--) {
         const date = new Date(now);
         date.setDate(date.getDate() - i);
@@ -107,15 +95,27 @@ export const DashboardPage = () => {
       }
     }
 
-    // Используем реальные данные категорий из API
+    // Используем реальные данные категорий из API, если есть
     const generatedCategoryData = stats?.categories || [];
 
     return { salesData: generatedSalesData, categoryData: generatedCategoryData };
   };
 
+  // Загрузка данных для графиков
+  const { data: chartData, isLoading: chartLoading } = useQuery({
+    queryKey: ['chartData', chartPeriod],
+    queryFn: async () => {
+      // Backend endpoint /partner/dashboard/charts пока не реализован,
+      // поэтому всегда генерируем данные локально на основе stats.
+      return generateChartData(stats, parseInt(chartPeriod));
+    },
+    retry: 1,
+    enabled: !!stats,
+  });
+
   // Данные для графиков
-  const salesData = chartData?.salesData || chartData?.sales_data || [];
-  const processedCategoryData = (chartData?.categoryData || chartData?.category_data || []).map((item: any, index: number) => ({
+  const salesData = chartData?.salesData || [];
+  const processedCategoryData = (chartData?.categoryData || []).map((item: any, index: number) => ({
     ...item,
     color: CHART_COLORS[index % CHART_COLORS.length],
   }));

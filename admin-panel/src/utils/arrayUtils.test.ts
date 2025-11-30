@@ -27,7 +27,6 @@ describe('toArray utility', () => {
     expect(toArray<string>(input)).toEqual([]);
   });
   test('handles nullish input gracefully', () => {
-    // @ts-ignore - simulate runtime null
     expect(toArray<string>(null as any, ['fallback'])).toEqual(['fallback']);
   });
 });

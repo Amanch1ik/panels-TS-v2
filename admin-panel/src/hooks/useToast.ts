@@ -13,13 +13,13 @@ interface ToastOptions {
 const getIcon = (type: ToastType) => {
   switch (type) {
     case 'success':
-      return React.createElement(CheckCircleOutlined, { style: { color: '#52c41a' } });
+      return React.createElement(CheckCircleOutlined, { style: { color: 'var(--color-success)' } });
     case 'error':
-      return React.createElement(CloseCircleOutlined, { style: { color: '#ff4d4f' } });
+      return React.createElement(CloseCircleOutlined, { style: { color: 'var(--color-error)' } });
     case 'info':
-      return React.createElement(InfoCircleOutlined, { style: { color: '#1890ff' } });
+      return React.createElement(InfoCircleOutlined, { style: { color: 'var(--color-info)' } });
     case 'warning':
-      return React.createElement(WarningOutlined, { style: { color: '#faad14' } });
+      return React.createElement(WarningOutlined, { style: { color: 'var(--color-warning)' } });
     default:
       return null;
   }

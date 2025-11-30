@@ -7,12 +7,13 @@ import './styles/colors.css'; // Цветовая палитра Yess!Go
 import './styles/animations.css'; // Глобальные анимации
 import './styles/global.css'; // Глобальные стили
 import './styles/theme.css'; // Система тем (светлая/тёмная)
-import './i18n'; // Инициализация i18n
+import i18n, { type Language } from './i18n'; // Инициализация i18n и доступ к языку
 import I18nProvider from './i18nGatewayContext';
 
-// Настройка dayjs с русской локализацией
+// Настройка dayjs с поддержкой нескольких локалей
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru';
+import 'dayjs/locale/en';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import localeData from 'dayjs/plugin/localeData';
 import weekday from 'dayjs/plugin/weekday';
@@ -20,7 +21,23 @@ import weekday from 'dayjs/plugin/weekday';
 dayjs.extend(customParseFormat);
 dayjs.extend(localeData);
 dayjs.extend(weekday);
-dayjs.locale('ru');
+
+const applyDayjsLocale = (lang: Language) => {
+  if (lang === 'en') {
+    dayjs.locale('en');
+  } else {
+    // Для кыргызского используем русскую локаль форматов, чтобы избежать падений,
+    // пока не будет добавлена полноценная локаль dayjs для ky-KG
+    dayjs.locale('ru');
+  }
+};
+
+// Инициализируем локаль dayjs по текущему языку
+applyDayjsLocale(i18n.getLanguage());
+// И обновляем её при смене языка через i18n
+i18n.subscribe(() => {
+  applyDayjsLocale(i18n.getLanguage());
+});
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {

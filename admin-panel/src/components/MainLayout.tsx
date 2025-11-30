@@ -18,6 +18,7 @@ import {
   MenuUnfoldOutlined,
   EnvironmentOutlined,
   PlayCircleOutlined,
+  BarChartOutlined,
 } from '@ant-design/icons';
 import { useAuth } from '@/hooks/useAuth';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
@@ -29,6 +30,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useMessage } from '@/hooks/useMessage';
 import { SunOutlined, MoonOutlined } from '@ant-design/icons';
 import { MobileMenu } from './MobileMenu';
+import { useI18nContext } from '@/i18nGatewayContext';
 import './MainLayout.css';
 import '../styles/animations.css';
 
@@ -46,7 +48,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [language, setLanguage] = useState(localStorage.getItem('language') || 'ru');
+  const { language, setLanguage } = useI18nContext();
   const [profileForm] = Form.useForm();
   const location = useLocation();
   const navigate = useNavigate();
@@ -82,8 +84,13 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
     queryFn: async () => {
       try {
         const response = await api.notificationsApi.getAll();
-        const data = Array.isArray(response?.data) ? response.data : (response?.items || []);
-        return data;
+        const payload: any = (response as any)?.data ?? response;
+        const items = Array.isArray(payload)
+          ? payload
+          : Array.isArray(payload?.items)
+            ? payload.items
+            : [];
+        return items;
       } catch (error) {
         console.error('Failed to load notifications:', error);
         return [];
@@ -101,19 +108,11 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   // Меняем язык
   const handleLanguageChange = (lang: string) => {
     if (lang === language) return;
-    setLanguage(lang);
-    i18n.setLanguage(lang as 'ru' | 'en' | 'kg');
-    try {
-      localStorage.setItem('language', lang);
-    } catch (error) {
-      console.warn('Failed to save language to localStorage:', error);
-    }
+    setLanguage(lang as any);
     const langName = lang === 'ru' ? t('language.russian', 'Русский') : lang === 'en' ? t('language.english', 'English') : t('language.kyrgyz', 'Кыргызча');
-    message.success(t('language.changed', 'Язык изменён на {lang}', { lang: langName }).replace('{lang}', langName));
-    // Перезагружаем страницу для применения переводов
-    setTimeout(() => {
-      window.location.reload();
-    }, 300);
+    // Функция t принимает только ключ и значение по умолчанию, поэтому плейсхолдер подставляем вручную
+    const changedText = t('language.changed', 'Язык изменён на {lang}').replace('{lang}', langName);
+    message.success(changedText);
   };
 
   const handleSearch = (value: string) => {
@@ -156,12 +155,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
     {
       key: '/partners',
       icon: <ShopOutlined />,
-      label: (
-        <Link to="/partners" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span>{t('nav.partners')}</span>
-          <Badge count={2} size="small" style={{ backgroundColor: '#ff4d4f' }} />
-        </Link>
-      ),
+      label: <Link to="/partners">{t('nav.partners')}</Link>,
     },
     {
       key: '/partners/map',
@@ -171,22 +165,12 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
     {
       key: '/transactions',
       icon: <TransactionOutlined />,
-      label: (
-        <Link to="/transactions" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span>{t('nav.transactions')}</span>
-          <Badge count={2} size="small" style={{ backgroundColor: '#ff4d4f' }} />
-        </Link>
-      ),
+      label: <Link to="/transactions">{t('nav.transactions')}</Link>,
     },
     {
       key: '/promotions',
       icon: <GiftOutlined />,
-      label: (
-        <Link to="/promotions" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span>{t('nav.promotions')}</span>
-          <Badge count={2} size="small" style={{ backgroundColor: '#ff4d4f' }} />
-        </Link>
-      ),
+      label: <Link to="/promotions">{t('nav.promotions')}</Link>,
     },
     {
       key: '/stories',
@@ -218,6 +202,11 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
       icon: <AuditOutlined />,
       label: <Link to="/audit">{t('nav.audit')}</Link>,
     },
+    {
+      key: '/monitoring',
+      icon: <BarChartOutlined />,
+      label: <Link to="/monitoring">{t('nav.monitoring', 'Мониторинг')}</Link>,
+    },
   ];
 
   // Обновление профиля
@@ -225,49 +214,40 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
     mutationFn: async (values: any) => {
       let avatarUrl = user?.avatar_url;
       if (values.avatar && values.avatar[0]?.originFileObj) {
-        try {
-          const formData = new FormData();
-          formData.append('file', values.avatar[0].originFileObj);
-          const uploadResponse = await api.post('/api/v1/admin/upload/avatar', formData, {
-            headers: { 'Content-Type': 'multipart/form-data' },
-          });
-          avatarUrl = uploadResponse.data.url || uploadResponse.data.avatar_url;
-        } catch (error) {
-          const reader = new FileReader();
-          avatarUrl = await new Promise<string>((resolve, reject) => {
-            reader.onload = (e) => {
-              const base64 = e.target?.result as string;
-              resolve(base64);
-            };
-            reader.onerror = () => reject(new Error('Failed to read file'));
-            reader.readAsDataURL(values.avatar[0].originFileObj);
-          });
-        }
+        // Пока backend-эндпоинт загрузки аватара не реализован,
+        // сохраняем аватар только локально (base64) без сетевого запроса.
+        const reader = new FileReader();
+        avatarUrl = await new Promise<string>((resolve, reject) => {
+          reader.onload = (e) => {
+            const base64 = e.target?.result as string;
+            resolve(base64);
+          };
+          reader.onerror = () => reject(new Error('Failed to read file'));
+          reader.readAsDataURL(values.avatar[0].originFileObj);
+        });
       }
       
       const updateData = { ...values, avatar_url: avatarUrl };
       delete updateData.avatar;
       
-      // Отправляем на сервер
-      return await api.put(`/api/v1/admin/admins/${user?.id || 1}`, updateData);
+      // Эмулируем успешное обновление профиля локально без запроса к backend.
+      return { data: { ...(user || {}), ...updateData } };
     },
     onSuccess: (response) => {
-      if (response?.data?.admin || response?.data) {
-        const updatedUser = response.data.admin || response.data;
-        setUser({
-          id: updatedUser.id?.toString() || user?.id || '1',
-          email: updatedUser.email || updatedUser.username || user?.email || '',
-          username: updatedUser.username || updatedUser.email || user?.email || '',
-          avatar_url: updatedUser.avatar_url || user?.avatar_url,
-          role: updatedUser.is_superadmin ? 'admin' : 'partner_admin',
-        });
-      }
-      message.success(t('profile.updated', 'Профиль успешно обновлен'));
+      const updatedUser = (response as any)?.data || (response as any) || {};
+      setUser({
+        id: updatedUser.id?.toString() || user?.id || '1',
+        email: updatedUser.email || updatedUser.username || user?.email || '',
+        username: updatedUser.username || updatedUser.email || user?.email || '',
+        avatar_url: updatedUser.avatar_url || user?.avatar_url,
+        role: updatedUser.is_superadmin ? 'admin' : 'partner_admin',
+      });
+      message.success(t('profile.updated', 'Профиль успешно обновлен (локально)'));
       setIsProfileModalOpen(false);
       profileForm.resetFields();
     },
-    onError: (error: any) => {
-      message.error(error?.response?.data?.detail || t('profile.updateError', 'Ошибка при обновлении профиля'));
+    onError: () => {
+      message.error(t('profile.updateError', 'Ошибка при обновлении профиля'));
     },
   });
 
@@ -322,14 +302,14 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
         collapsible={false}
         width={250}
         style={{
-          background: '#ffffff',
-          boxShadow: '2px 0 8px rgba(0,0,0,0.06)',
+          background: 'var(--sidebar-bg)',
+          boxShadow: 'var(--shadow-md)',
         }}
         role="navigation"
         aria-label={t('common.mainNavigation', 'Основная навигация')}
       >
         <div className="sidebar-logo">
-          <span style={{ color: '#ffffff', fontWeight: 'bold', fontSize: 24 }} aria-label="YESS! Admin Panel">
+          <span style={{ color: 'var(--color-text-inverse)', fontWeight: 'bold', fontSize: 24 }} aria-label="YESS! Admin Panel">
             YESS!Admin
           </span>
         </div>
@@ -339,9 +319,9 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
           items={menuItems}
           className="sidebar-menu"
           aria-label={t('common.menu', 'Меню навигации')}
-          style={{ 
+          style={{
             borderRight: 0,
-            background: '#ffffff',
+            background: 'transparent',
           }}
           theme="light"
         />
@@ -362,7 +342,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
                 onClick: handleLogout,
               },
             ]}
-            style={{ borderRight: 0, background: '#ffffff' }}
+            style={{ borderRight: 0, background: 'transparent' }}
             theme="light"
           />
         </div>
@@ -437,9 +417,9 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
               }}
             >
               {isDark ? (
-                <SunOutlined style={{ fontSize: 18, color: '#AEC380' }} aria-hidden="true" />
+                <SunOutlined style={{ fontSize: 18, color: 'var(--color-text-secondary)' }} aria-hidden="true" />
               ) : (
-                <MoonOutlined style={{ fontSize: 18, color: '#0F2A1D' }} aria-hidden="true" />
+                <MoonOutlined style={{ fontSize: 18, color: 'var(--color-text-primary)' }} aria-hidden="true" />
               )}
             </button>
             <Select
@@ -458,20 +438,20 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
               className="header-notification"
               onClick={() => setIsNotificationOpen(true)}
               aria-label={`${t('common.notifications', 'Уведомления')}${unreadCount > 0 ? ` (${unreadCount} ${t('common.unread', 'непрочитанных')})` : ''}`}
-              style={{
-                cursor: 'pointer',
-                border: 'none',
-                background: 'transparent',
-                padding: '8px',
-                borderRadius: '8px',
-              }}
+                style={{
+                  cursor: 'pointer',
+                  border: 'none',
+                  background: 'transparent',
+                  padding: '8px',
+                  borderRadius: '8px',
+                }}
             >
               <Badge
                 count={unreadCount}
                 size="small"
-                style={{ backgroundColor: unreadCount > 0 ? '#689071' : '#d9d9d9' }}
+                style={{ backgroundColor: unreadCount > 0 ? 'var(--color-primary)' : '#d9d9d9' }}
               >
-                <BellOutlined style={{ fontSize: 18, color: '#0F2A1D' }} aria-hidden="true" />
+                <BellOutlined style={{ fontSize: 18, color: 'var(--color-text-primary)' }} aria-hidden="true" />
               </Badge>
             </button>
             <Dropdown
@@ -500,7 +480,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
                     icon={<UserOutlined />}
                     alt={t('common.avatar', 'Аватар пользователя')}
                     style={{
-                      backgroundColor: '#52c41a',
+                      backgroundColor: 'var(--color-success)',
                       width: 36,
                       height: 36,
                     }}
@@ -589,40 +569,20 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
       <NotificationCenter
         open={isNotificationOpen}
         onClose={() => setIsNotificationOpen(false)}
-        notifications={[
-          ...(unreadNotifications ? (unreadNotifications as any[]).map((notif: any) => ({
-            id: String(notif.id),
-            title: notif.title || t('notifications.notification', 'Уведомление'),
-            message: notif.message || '',
-            type: 'info' as const,
-            timestamp: notif.created_at ? new Date(notif.created_at).toLocaleString('ru-RU') : 'Только что',
-            read: notif.is_read || false,
-          })) : []),
-          {
-            id: '1',
-            title: 'Новый пользователь зарегистрирован',
-            message: 'Пользователь John Doe успешно зарегистрирован в системе',
-            type: 'success' as const,
-            timestamp: '2 минуты назад',
-            read: false,
-          },
-          {
-            id: '2',
-            title: 'Новый партнер добавлен',
-            message: 'Партнер "Кафе Центральное" был добавлен в систему',
-            type: 'info' as const,
-            timestamp: '1 час назад',
-            read: false,
-          },
-          {
-            id: '3',
-            title: 'Транзакция обработана',
-            message: 'Транзакция на сумму 5,000 сом успешно обработана',
-            type: 'success' as const,
-            timestamp: '3 часа назад',
-            read: true,
-          },
-        ]}
+        notifications={
+          Array.isArray(notifications)
+            ? (notifications as any[]).map((notif: any) => ({
+                id: String(notif.id ?? notif.notification_id ?? Math.random()),
+                title: notif.title || t('notifications.notification', 'Уведомление'),
+                message: notif.message || '',
+                type: 'info' as const,
+                timestamp: notif.created_at
+                  ? new Date(notif.created_at).toLocaleString(language === 'en' ? 'en-US' : 'ru-RU')
+                  : t('notifications.justNow', 'Только что'),
+                read: Boolean(notif.is_read),
+              }))
+            : []
+        }
       />
     </Layout>
   );

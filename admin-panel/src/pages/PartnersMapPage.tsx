@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { Card, Select, Input, Space, Button, Tag, message, Modal, Descriptions, List, Typography, Empty, Segmented, Switch, Slider, Statistic, Row, Col } from 'antd';
 import { SearchOutlined, EnvironmentOutlined, PhoneOutlined, MailOutlined, CarOutlined, ClockCircleOutlined, SwapRightOutlined, TeamOutlined, UserOutlined, StarOutlined, StarFilled, DownloadOutlined, FileImageOutlined, FilePdfOutlined, BarChartOutlined, EyeOutlined, WifiOutlined } from '@ant-design/icons';
 import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline, CircleMarker, Circle } from 'react-leaflet';
-import MarkerClusterGroup from 'react-leaflet-markercluster';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet.heat';
@@ -82,7 +81,9 @@ export const PartnersMapPage = () => {
   const [routeLoading, setRouteLoading] = useState(false);
   const [routeOptions, setRouteOptions] = useState<RouteOption[]>([]);
   const [showRouteModal, setShowRouteModal] = useState(false);
-  const [clusteringEnabled, setClusteringEnabled] = useState(true);
+  // Кластеризацию временно отключаем логически (на карте), но оставляем переключатель,
+  // чтобы UI не ломать. Значение сейчас ни на что не влияет.
+  const [clusteringEnabled, setClusteringEnabled] = useState(false);
   const [radiusSearchEnabled, setRadiusSearchEnabled] = useState(false);
   const [searchRadius, setSearchRadius] = useState(5); // в км
   const [favorites, setFavorites] = useState<number[]>([]);
@@ -712,17 +713,17 @@ export const PartnersMapPage = () => {
       <div style={{ marginBottom: 20 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <h1 style={{ fontSize: 24, fontWeight: 600, color: '#0F2A1D', margin: 0 }}>
+            <h1 style={{ fontSize: 24, fontWeight: 600, color: 'var(--color-text-primary)', margin: 0 }}>
               {t('partners.map', 'Карта партнеров')}
             </h1>
-            <p style={{ color: '#689071', margin: '8px 0 0 0' }}>
+            <p style={{ color: 'var(--color-text-secondary)', margin: '8px 0 0 0' }}>
               {t('partners.mapDescription', 'Просмотр партнеров на карте и построение маршрутов')}
             </p>
           </div>
           <Space>
             <Tag
               color={isOnline ? 'success' : 'error'}
-              icon={isOnline ? <WifiOutlined /> : <WifiOutlined style={{ color: '#ff4d4f' }} />}
+              icon={isOnline ? <WifiOutlined /> : <WifiOutlined style={{ color: 'var(--color-error)' }} />}
             >
               {isOnline ? t('partners.online', 'Онлайн') : t('partners.offline', 'Оффлайн')}
             </Tag>
@@ -743,9 +744,9 @@ export const PartnersMapPage = () => {
       <Card
         style={{
           borderRadius: 16,
-          background: 'linear-gradient(135deg, #ffffff 0%, #F0F7EB 100%)',
-          border: '1px solid #E3EED4',
-          boxShadow: '0 2px 12px rgba(15, 42, 29, 0.08)',
+          background: 'var(--card-bg)',
+          border: '1px solid var(--card-border)',
+          boxShadow: 'var(--card-shadow)',
           marginBottom: 16,
         }}
         className="hover-lift-green"
@@ -835,7 +836,7 @@ export const PartnersMapPage = () => {
             loading={routeLoading}
             onClick={buildRouteToPartner}
             disabled={!selectedPartner}
-            style={{ backgroundColor: '#689071', borderColor: '#689071' }}
+            style={{ background: 'var(--color-primary)', borderColor: 'var(--color-primary)' }}
           >
             {t('partners.buildRoute', 'Построить маршрут')}
           </Button>
@@ -844,7 +845,7 @@ export const PartnersMapPage = () => {
               {t('partners.manageLocations', 'Управление точками')}
             </Button>
           </Link>
-          <Button.Group>
+          <Space.Compact>
             <Button
               icon={<FileImageOutlined />}
               loading={exporting}
@@ -861,7 +862,7 @@ export const PartnersMapPage = () => {
             >
               PDF
             </Button>
-          </Button.Group>
+          </Space.Compact>
           <Button
             icon={<BarChartOutlined />}
             onClick={() => setShowAnalytics(true)}
@@ -870,7 +871,7 @@ export const PartnersMapPage = () => {
             {t('partners.analytics', 'Аналитика')}
           </Button>
           <Space>
-            <span style={{ fontSize: 14, color: '#689071' }}>
+            <span style={{ fontSize: 14, color: 'var(--color-text-secondary)' }}>
               {t('partners.offlineMode', 'Offline режим')}:
             </span>
             <Switch
@@ -881,7 +882,7 @@ export const PartnersMapPage = () => {
             />
           </Space>
           <Space>
-            <span style={{ fontSize: 14, color: '#689071' }}>
+            <span style={{ fontSize: 14, color: 'var(--color-text-secondary)' }}>
               {t('partners.clustering', 'Кластеризация')}:
             </span>
             <Switch
@@ -892,7 +893,7 @@ export const PartnersMapPage = () => {
             />
           </Space>
           <Space>
-            <span style={{ fontSize: 14, color: '#689071' }}>
+            <span style={{ fontSize: 14, color: 'var(--color-text-secondary)' }}>
               {t('partners.radiusSearch', 'Радиус поиска')}:
             </span>
             <Switch
@@ -910,7 +911,7 @@ export const PartnersMapPage = () => {
           </Space>
           {radiusSearchEnabled && (
             <Space direction="vertical" size={0}>
-              <span style={{ fontSize: 12, color: '#689071' }}>
+              <span style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
                 {searchRadius} км
               </span>
               <Slider
@@ -924,7 +925,7 @@ export const PartnersMapPage = () => {
             </Space>
           )}
           <Space>
-            <span style={{ fontSize: 14, color: '#689071' }}>
+            <span style={{ fontSize: 14, color: 'var(--color-text-secondary)' }}>
               {t('partners.showFavorites', 'Избранные')}:
             </span>
             <Switch
@@ -935,7 +936,7 @@ export const PartnersMapPage = () => {
             />
           </Space>
           <Space>
-            <span style={{ fontSize: 14, color: '#689071' }}>
+            <span style={{ fontSize: 14, color: 'var(--color-text-secondary)' }}>
               {t('partners.showHeatmap', 'Тепловая карта')}:
             </span>
             <Switch
@@ -946,7 +947,7 @@ export const PartnersMapPage = () => {
             />
           </Space>
           <Space>
-            <span style={{ fontSize: 14, color: '#689071' }}>
+            <span style={{ fontSize: 14, color: 'var(--color-text-secondary)' }}>
               {t('partners.notifications', 'Уведомления')}:
             </span>
             <Switch
@@ -965,7 +966,7 @@ export const PartnersMapPage = () => {
           </Space>
           {notificationsEnabled && (
             <Space direction="vertical" size={0}>
-              <span style={{ fontSize: 12, color: '#689071' }}>
+              <span style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
                 {t('partners.notificationRadius', 'Радиус уведомлений')}: {notificationRadius} км
               </span>
               <Slider
@@ -988,9 +989,9 @@ export const PartnersMapPage = () => {
       <Card
         style={{
           borderRadius: 16,
-          background: 'linear-gradient(135deg, #ffffff 0%, #F0F7EB 100%)',
-          border: '1px solid #E3EED4',
-          boxShadow: '0 2px 12px rgba(15, 42, 29, 0.08)',
+          background: 'var(--card-bg)',
+          border: '1px solid var(--card-border)',
+          boxShadow: 'var(--card-shadow)',
           padding: 0,
           overflow: 'hidden',
         }}
@@ -1058,39 +1059,7 @@ export const PartnersMapPage = () => {
             )}
             
             {/* Маркеры партнеров */}
-            {clusteringEnabled ? (
-              <MarkerClusterGroup
-                chunkedLoading
-                spiderfyOnMaxZoom={true}
-                showCoverageOnHover={false}
-                maxClusterRadius={50}
-                iconCreateFunction={(cluster: any) => {
-                  const count = cluster.getChildCount();
-                  let size = 'small';
-                  if (count >= 100) size = 'large';
-                  else if (count >= 10) size = 'medium';
-
-                  return L.divIcon({
-                    html: `<div style="
-                      background-color: #689071;
-                      border: 3px solid white;
-                      border-radius: 50%;
-                      width: ${size === 'large' ? '50px' : size === 'medium' ? '40px' : '30px'};
-                      height: ${size === 'large' ? '50px' : size === 'medium' ? '40px' : '30px'};
-                      display: flex;
-                      align-items: center;
-                      justify-content: center;
-                      font-size: ${size === 'large' ? '16px' : size === 'medium' ? '14px' : '12px'};
-                      font-weight: bold;
-                      color: white;
-                      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-                    ">${count}</div>`,
-                    className: 'custom-cluster-icon',
-                    iconSize: L.point(size === 'large' ? 50 : size === 'medium' ? 40 : 30, size === 'large' ? 50 : size === 'medium' ? 40 : 30),
-                    iconAnchor: L.point(size === 'large' ? 25 : size === 'medium' ? 20 : 15, size === 'large' ? 25 : size === 'medium' ? 20 : 15),
-                  });
-                }}
-              >
+            <>
                 {/* Локации партнеров - четко видны на карте */}
                 {filteredLocations.map((loc: any) => {
                   if (!loc.latitude || !loc.longitude) return null;
@@ -1125,14 +1094,14 @@ export const PartnersMapPage = () => {
                     >
                       <Popup>
                         <div style={{ minWidth: 200 }}>
-                          <h3 style={{ margin: '0 0 8px 0', color: '#0F2A1D', fontWeight: 600 }}>
+                          <h3 style={{ margin: '0 0 8px 0', color: 'var(--color-text-primary)', fontWeight: 600 }}>
                             {partner?.name || t('partners.locationPoint', 'Точка партнера')}
                           </h3>
-                          <p style={{ margin: '4px 0', color: '#689071', fontSize: 12 }}>
+                          <p style={{ margin: '4px 0', color: 'var(--color-primary)', fontSize: 12 }}>
                             <EnvironmentOutlined /> {loc.address}
                           </p>
                           {loc.phone_number && (
-                            <p style={{ margin: '4px 0', color: '#689071', fontSize: 12 }}>
+                            <p style={{ margin: '4px 0', color: 'var(--color-primary)', fontSize: 12 }}>
                               <PhoneOutlined /> {loc.phone_number}
                             </p>
                           )}
@@ -1157,104 +1126,14 @@ export const PartnersMapPage = () => {
                     >
                       <Popup>
                         <div style={{ minWidth: 200 }}>
-                          <h3 style={{ margin: '0 0 8px 0', color: '#0F2A1D' }}>{partner.name}</h3>
+                          <h3 style={{ margin: '0 0 8px 0', color: 'var(--color-text-primary)' }}>{partner.name}</h3>
                           {partner.address && (
-                            <p style={{ margin: '4px 0', color: '#689071', fontSize: 12 }}>
+                            <p style={{ margin: '4px 0', color: 'var(--color-primary)', fontSize: 12 }}>
                               <EnvironmentOutlined /> {partner.address}
                             </p>
                           )}
                           {partner.phone && (
-                            <p style={{ margin: '4px 0', color: '#689071', fontSize: 12 }}>
-                              <PhoneOutlined /> {partner.phone}
-                            </p>
-                          )}
-                          {partner.category && (
-                            <Tag color="green" style={{ marginTop: 8 }}>
-                              {partner.category}
-                            </Tag>
-                          )}
-                        </div>
-                      </Popup>
-                    </Marker>
-                  );
-                })}
-              </MarkerClusterGroup>
-            ) : (
-              <>
-                {/* Локации партнеров - четко видны на карте */}
-                {filteredLocations.map((loc: any) => {
-                  if (!loc.latitude || !loc.longitude) return null;
-                  const partner = partners.find(p => p.id === loc.partner_id);
-                  return (
-                    <Marker
-                      key={`loc-${loc.id}`}
-                      position={[loc.latitude, loc.longitude]}
-                      icon={L.divIcon({
-                        className: 'partner-location-marker',
-                        html: `<div style="
-                          width: 24px;
-                          height: 24px;
-                          background: ${loc.is_active ? '#52c41a' : '#d9d9d9'};
-                          border: 3px solid white;
-                          border-radius: 50%;
-                          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-                          display: flex;
-                          align-items: center;
-                          justify-content: center;
-                        ">
-                          <div style="
-                            width: 8px;
-                            height: 8px;
-                            background: white;
-                            border-radius: 50%;
-                          "></div>
-                        </div>`,
-                        iconSize: [24, 24],
-                        iconAnchor: [12, 12],
-                      })}
-                    >
-                      <Popup>
-                        <div style={{ minWidth: 200 }}>
-                          <h3 style={{ margin: '0 0 8px 0', color: '#0F2A1D', fontWeight: 600 }}>
-                            {partner?.name || t('partners.locationPoint', 'Точка партнера')}
-                          </h3>
-                          <p style={{ margin: '4px 0', color: '#689071', fontSize: 12 }}>
-                            <EnvironmentOutlined /> {loc.address}
-                          </p>
-                          {loc.phone_number && (
-                            <p style={{ margin: '4px 0', color: '#689071', fontSize: 12 }}>
-                              <PhoneOutlined /> {loc.phone_number}
-                            </p>
-                          )}
-                          <Tag color={loc.is_active ? 'green' : 'default'} style={{ marginTop: 8 }}>
-                            {loc.is_active ? t('partners.locationActive', 'Активна') : t('partners.locationInactive', 'Неактивна')}
-                          </Tag>
-                        </div>
-                      </Popup>
-                    </Marker>
-                  );
-                })}
-
-                {filteredPartners.map((partner) => {
-                  if (!partner.latitude || !partner.longitude) return null;
-                  return (
-                    <Marker
-                      key={partner.id}
-                      position={[partner.latitude, partner.longitude]}
-                      eventHandlers={{
-                        click: () => handleMarkerClick(partner),
-                      }}
-                    >
-                      <Popup>
-                        <div style={{ minWidth: 200 }}>
-                          <h3 style={{ margin: '0 0 8px 0', color: '#0F2A1D' }}>{partner.name}</h3>
-                          {partner.address && (
-                            <p style={{ margin: '4px 0', color: '#689071', fontSize: 12 }}>
-                              <EnvironmentOutlined /> {partner.address}
-                            </p>
-                          )}
-                          {partner.phone && (
-                            <p style={{ margin: '4px 0', color: '#689071', fontSize: 12 }}>
+                            <p style={{ margin: '4px 0', color: 'var(--color-primary)', fontSize: 12 }}>
                               <PhoneOutlined /> {partner.phone}
                             </p>
                           )}
@@ -1269,7 +1148,6 @@ export const PartnersMapPage = () => {
                   );
                 })}
               </>
-            )}
           </MapContainer>
         </div>
       </Card>
@@ -1391,19 +1269,19 @@ export const PartnersMapPage = () => {
           style={{
             marginTop: 16,
             borderRadius: 16,
-            background: 'linear-gradient(135deg, #ffffff 0%, #F0F7EB 100%)',
-            border: '1px solid #E3EED4',
-            boxShadow: '0 2px 12px rgba(15, 42, 29, 0.08)',
+            background: 'var(--card-bg)',
+            border: '1px solid var(--card-border)',
+            boxShadow: 'var(--card-shadow)',
           }}
         >
           <Space size="large" wrap>
             <Space>
               <ClockCircleOutlined style={{ color: '#689071' }} />
-              <span style={{ color: '#0F2A1D' }}>{routeInfo.duration}</span>
+              <span style={{ color: 'var(--color-text-primary)' }}>{routeInfo.duration}</span>
             </Space>
             <Space>
               <SwapRightOutlined style={{ color: '#689071' }} />
-              <span style={{ color: '#0F2A1D' }}>{routeInfo.distance}</span>
+              <span style={{ color: 'var(--color-text-primary)' }}>{routeInfo.distance}</span>
             </Space>
             <Tag color="green">
               {routeMode === 'transit'
@@ -1511,7 +1389,7 @@ export const PartnersMapPage = () => {
                       unCheckedChildren={t('common.off', 'Выкл')}
                     />
                   </Space>
-                  <div style={{ marginTop: 8, fontSize: 12, color: '#666' }}>
+                  <div style={{ marginTop: 8, fontSize: 12, color: 'var(--color-text-tertiary)' }}>
                     {t('partners.analyticsDescription', 'Отслеживание просмотров партнеров, запросов маршрутов и избранных')}
                   </div>
                 </Card>
@@ -1525,7 +1403,7 @@ export const PartnersMapPage = () => {
                         <div>
                           <strong>{t('partners.cacheStatus', 'Статус кеша')}:</strong>
                         </div>
-                        <div style={{ fontSize: 12, color: '#666' }}>
+                        <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>
                           • {t('partners.partners', 'Партнеры')}: {cacheInfo.partnersCount}<br/>
                           • {t('partners.locations', 'Локации')}: {cacheInfo.locationsCount}<br/>
                           • {t('partners.favorites', 'Избранные')}: {cacheInfo.hasFavorites ? '✅' : '❌'}<br/>
@@ -1539,7 +1417,7 @@ export const PartnersMapPage = () => {
                             {t('partners.refreshData', 'Обновить данные')}
                           </Button>
                         </Space>
-                        <div style={{ fontSize: 12, color: '#666', marginTop: 8 }}>
+                        <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)', marginTop: 8 }}>
                           {t('partners.offlineDescription', 'При отключении интернета приложение будет работать с кешированными данными')}
                         </div>
                       </Space>

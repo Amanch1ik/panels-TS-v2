@@ -10,6 +10,8 @@ import { MainLayout } from '@/components/MainLayout';
 import { LoginPage } from '@/pages/LoginPage';
 import { Suspense, lazy } from 'react';
 import React from 'react';
+import { useI18nContext } from '@/i18nGatewayContext';
+import { initializeMonitoring } from '../../../shared/monitoring';
 
 // Lazy loading для страниц
 const DashboardPage = lazy(() => import('@/pages/DashboardPage').then(module => ({ default: module.DashboardPage })));
@@ -23,6 +25,7 @@ const SettingsPage = lazy(() => import('@/pages/SettingsPage').then(module => ({
 const ReferralsPage = lazy(() => import('@/pages/ReferralsPage').then(module => ({ default: module.ReferralsPage })));
 const AuditPage = lazy(() => import('@/pages/AuditPage').then(module => ({ default: module.AuditPage })));
 const PartnersMapPage = lazy(() => import('@/pages/PartnersMapPage').then(module => ({ default: module.PartnersMapPage })));
+const MonitoringPage = lazy(() => import('@/pages/MonitoringPage').then(module => ({ default: module.MonitoringPage })));
 // PartnerLocationsPage удалена - точки партнеров теперь управляются через форму добавления партнеров
 
 const queryClient = new QueryClient({
@@ -67,13 +70,18 @@ const LoadingFallback = () => (
     background: 'linear-gradient(135deg, #689071 0%, #AEC380 50%, #E3EED4 100%)',
   }}>
     <Spin size="large" />
-    <span style={{ marginLeft: 16, color: '#0F2A1D' }}>Загрузка...</span>
+    <span style={{ marginLeft: 16, color: 'var(--color-text-primary)' }}>Загрузка...</span>
   </div>
 );
 
 function App() {
-  const language = localStorage.getItem('language') || 'ru';
-  const antdLocale = language === 'en' ? enUS : ruRU; // Для кыргызского тоже используем русский пока
+  const { language } = useI18nContext();
+  const antdLocale = language === 'en' ? enUS : ruRU; // Для кыргызского пока используем русский
+  
+  // Инициализация системы мониторинга при загрузке приложения
+  React.useEffect(() => {
+    initializeMonitoring();
+  }, []);
   
   // Глобальная обработка ошибок
   React.useEffect(() => {
@@ -125,20 +133,20 @@ function App() {
           locale={antdLocale}
           theme={{
             token: {
-              colorPrimary: '#689071',
+              colorPrimary: 'var(--color-primary)',
               borderRadius: 12,
               fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-              colorSuccess: '#52c41a',
-              colorError: '#ff4d4f',
-              colorWarning: '#AEC380',
-              colorInfo: '#1890ff',
+              colorSuccess: 'var(--color-success)',
+              colorError: 'var(--color-error, #ff4d4f)',
+              colorWarning: 'var(--color-warning, #faad14)',
+              colorInfo: 'var(--color-info, #1890ff)',
             },
             components: {
               Menu: {
-                itemSelectedBg: 'linear-gradient(135deg, #689071 0%, #AEC380 100%)',
-                itemSelectedColor: '#ffffff',
-                itemHoverBg: '#E3EED4',
-                itemActiveBg: 'linear-gradient(135deg, #689071 0%, #AEC380 100%)',
+                itemSelectedBg: 'var(--color-primary, #689071)',
+                itemSelectedColor: 'var(--color-text-inverse, #ffffff)',
+                itemHoverBg: 'var(--color-bg-hover)',
+                itemActiveBg: 'var(--color-primary, #689071)',
                 itemBorderRadius: 12,
               },
               Button: {
@@ -148,18 +156,18 @@ function App() {
               },
               Card: {
                 borderRadius: 16,
-                boxShadow: '0 2px 12px rgba(15, 42, 29, 0.08)',
+                boxShadow: 'var(--shadow-md)',
                 paddingLG: 24,
               },
               Input: {
                 borderRadius: 12,
-                activeBorderColor: '#689071',
-                hoverBorderColor: '#AEC380',
+                activeBorderColor: 'var(--color-primary)',
+                hoverBorderColor: 'var(--color-border-hover)',
               },
               Table: {
                 borderRadius: 12,
-                headerBg: '#F0F7EB',
-                headerColor: '#0F2A1D',
+                headerBg: 'var(--color-bg-tertiary)',
+                headerColor: 'var(--color-text-primary)',
               },
             },
           }}
@@ -193,6 +201,7 @@ function App() {
                               <Route path="/referrals" element={<ReferralsPage />} />
                               <Route path="/settings" element={<SettingsPage />} />
                               <Route path="/audit" element={<AuditPage />} />
+                              <Route path="/monitoring" element={<MonitoringPage />} />
                               <Route path="*" element={<Navigate to="/" replace />} />
                             </Routes>
                           </Suspense>

@@ -143,8 +143,12 @@ export const LoginPage = () => {
         }
         
         setErrorMessage(errorText);
-        // Убираем эмодзи из toast сообщения
-        const toastMessage = errorText.replace(/[❌🚫👤⏱️🔧🌐🔤⚠️]/gu, '').trim();
+        // Убираем эмодзи из toast сообщения без использования сложных RegExp,
+        // чтобы избежать ошибок линтера no-misleading-character-class
+        const toastMessage = ['❌', '🚫', '👤', '⏱️', '🔧', '🌐', '🔤', '⚠️'].reduce(
+          (acc, icon) => acc.split(icon).join(''),
+          errorText
+        ).trim();
         message.error(toastMessage || 'Ошибка при входе');
     } finally {
       setLoading(false);
@@ -169,7 +173,7 @@ export const LoginPage = () => {
       }
       
       setErrorMessage(errorText);
-      message.warning(errorText.replace(/[⚠️]/gu, '').trim());
+      message.warning(errorText.replace('⚠️', '').trim());
     }
   };
 

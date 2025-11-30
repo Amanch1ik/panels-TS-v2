@@ -1,4 +1,4 @@
-import { Card, List, Avatar, Tag, Empty } from 'antd';
+import { Card, List, Avatar, Tag, Empty, Spin } from 'antd';
 import { 
   ShoppingOutlined, 
   UserAddOutlined, 
@@ -6,6 +6,10 @@ import {
   DollarOutlined,
   CheckCircleOutlined,
 } from '@ant-design/icons';
+import { useQuery } from '@tanstack/react-query';
+import { transactionsApi } from '../services/api';
+import { toArray } from '../utils/arrayUtils';
+import { formatRelativeTime } from '../utils/dateUtils';
 
 interface Activity {
   id: string;
@@ -48,43 +52,77 @@ const getStatusColor = (status?: Activity['status']) => {
   }
 };
 
-export const RecentActivity = ({ activities = [] }: RecentActivityProps) => {
-  const defaultActivities: Activity[] = [
-    {
-      id: '1',
-      type: 'sale',
-      title: 'Новая продажа',
-      description: 'Продажа на сумму 1,500 ₽',
-      timestamp: '5 минут назад',
-      status: 'success',
+export const RecentActivity = ({ activities: propActivities }: RecentActivityProps) => {
+  // Загружаем ТОЛЬКО реальные транзакции из API
+  const { data: transactionsResponse, isLoading } = useQuery({
+    queryKey: ['recent-transactions'],
+    queryFn: async () => {
+      try {
+        const response = await transactionsApi.getTransactions({ limit: 10 });
+        // Проверяем, что ответ содержит реальные данные
+        const data = response?.data;
+        if (!data || (Array.isArray(data) && data.length === 0)) {
+          return [];
+        }
+        return data;
+      } catch (error) {
+        console.error('Error fetching recent transactions:', error);
+        return [];
+      }
     },
-    {
-      id: '2',
-      type: 'promotion',
-      title: 'Акция создана',
-      description: 'Акция "Скидка 20%" опубликована',
-      timestamp: '1 час назад',
-      status: 'success',
-    },
-    {
-      id: '3',
-      type: 'employee',
-      title: 'Сотрудник добавлен',
-      description: 'Peter Taylor добавлен в систему',
-      timestamp: '2 часа назад',
-      status: 'success',
-    },
-    {
-      id: '4',
-      type: 'payment',
-      title: 'Платеж обработан',
-      description: 'Платеж на сумму 10,000 сом',
-      timestamp: '3 часа назад',
-      status: 'success',
-    },
-  ];
+    retry: 1,
+    staleTime: 30 * 1000, // 30 секунд - данные считаются свежими
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+  });
 
-  const displayActivities = activities.length > 0 ? activities : defaultActivities;
+  // Преобразуем транзакции в формат Activity ТОЛЬКО из реальных данных API
+  const activities: Activity[] = (toArray(transactionsResponse, []) || [])
+    .filter((transaction: any) => {
+      // Пропускаем транзакции без валидных данных
+      if (!transaction || (!transaction.id && !transaction.created_at && !transaction.date)) {
+        return false;
+      }
+      return true;
+    })
+    .slice(0, 10)
+    .map((transaction: any) => {
+      const amount = transaction.amount || 0;
+      const transactionType = String(transaction.type || 'payment').toLowerCase();
+      const date = transaction.date || transaction.created_at || transaction.timestamp;
+      
+      if (!date) {
+        return null; // Пропускаем транзакции без даты
+      }
+      
+      let activityType: Activity['type'] = 'payment';
+      let title = 'Платеж обработан';
+      let description = `Платеж на сумму ${amount > 0 ? amount.toLocaleString('ru-RU') : Math.abs(amount).toLocaleString('ru-RU')} сом`;
+      
+      if (transactionType.includes('sale') || transactionType.includes('продаж')) {
+        activityType = 'sale';
+        title = 'Новая продажа';
+        description = `Продажа на сумму ${amount.toLocaleString('ru-RU')} сом`;
+      } else if (transactionType.includes('promotion') || transactionType.includes('акци')) {
+        activityType = 'promotion';
+        title = 'Акция использована';
+        description = `Акция применена, сумма ${amount.toLocaleString('ru-RU')} сом`;
+      }
+      
+      return {
+        id: `transaction-${transaction.id || date}`,
+        type: activityType,
+        title,
+        description,
+        timestamp: date,
+        status: transaction.status === 'completed' || transaction.status === 'success' ? 'success' : 
+                transaction.status === 'pending' ? 'pending' : 'success',
+      };
+    })
+    .filter((item): item is Activity => item !== null); // Удаляем null значения
+
+  // Используем ТОЛЬКО реальные данные из API - propActivities игнорируются
+  const displayActivities = activities;
 
   return (
     <Card
@@ -97,7 +135,11 @@ export const RecentActivity = ({ activities = [] }: RecentActivityProps) => {
       }}
       className="hover-lift-green"
     >
-      {displayActivities.length === 0 ? (
+      {isLoading ? (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
+          <Spin size="large" />
+        </div>
+      ) : displayActivities.length === 0 ? (
         <Empty description="Нет активности" image={Empty.PRESENTED_IMAGE_SIMPLE} />
       ) : (
         <List
@@ -134,7 +176,7 @@ export const RecentActivity = ({ activities = [] }: RecentActivityProps) => {
                   <div>
                     <div style={{ color: '#689071', fontSize: 13 }}>{item.description}</div>
                     <div style={{ color: '#AEC380', fontSize: 11, marginTop: 4 }}>
-                      {item.timestamp}
+                      {formatRelativeTime(item.timestamp)}
                     </div>
                   </div>
                 }
@@ -146,4 +188,3 @@ export const RecentActivity = ({ activities = [] }: RecentActivityProps) => {
     </Card>
   );
 };
-

@@ -119,10 +119,10 @@ export const AuditPage = () => {
   return (
     <div className="fade-in">
       <div style={{ marginBottom: 20 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 600, color: '#0F2A1D', margin: 0, marginBottom: 8 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 600, color: 'var(--color-text-primary)', margin: 0, marginBottom: 8 }}>
           {t('audit.title', 'Аудит')}
         </h1>
-        <p style={{ color: '#689071', margin: 0 }}>
+        <p style={{ color: 'var(--color-primary)', margin: 0 }}>
           {t('audit.description', 'Анализ действий администратора и защита аккаунтов')}
         </p>
       </div>
@@ -131,9 +131,9 @@ export const AuditPage = () => {
       <Card
         style={{
           borderRadius: 16,
-          background: 'linear-gradient(135deg, #ffffff 0%, #F0F7EB 100%)',
-          border: '1px solid #E3EED4',
-          boxShadow: '0 2px 12px rgba(15, 42, 29, 0.08)',
+          background: 'var(--card-bg)',
+          border: '1px solid var(--card-border)',
+          boxShadow: 'var(--card-shadow)',
           marginBottom: 20,
         }}
         className="hover-lift-green"
@@ -149,16 +149,16 @@ export const AuditPage = () => {
 
       {/* Таблица сессий */}
       <div style={{ marginBottom: 16 }}>
-        <h2 style={{ fontSize: 20, fontWeight: 600, color: '#0F2A1D', margin: 0 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 600, color: 'var(--color-text-primary)', margin: 0 }}>
           {t('audit.sessions', 'Сессии')}
         </h2>
       </div>
       <Card
         style={{
           borderRadius: 16,
-          background: 'linear-gradient(135deg, #ffffff 0%, #F0F7EB 100%)',
-          border: '1px solid #E3EED4',
-          boxShadow: '0 2px 12px rgba(15, 42, 29, 0.08)',
+          background: 'var(--card-bg)',
+          border: '1px solid var(--card-border)',
+          boxShadow: 'var(--card-shadow)',
         }}
         className="hover-lift-green"
       >

@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Card, Row, Col, Button } from 'antd';
 import {
   UserAddOutlined,
@@ -8,63 +9,66 @@ import {
   BellOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import { t } from '@/i18n';
+import { useI18nContext } from '@/i18nGatewayContext';
 
 export const QuickActions = () => {
   const navigate = useNavigate();
+  const { language } = useI18nContext(); // Подписка на изменения языка для перерисовки
 
-  const actions = [
+  const actions = useMemo(() => [
     {
       key: 'user',
       icon: <UserAddOutlined />,
-      label: 'Добавить пользователя',
+      label: t('quickActions.addUser', 'Добавить пользователя'),
       onClick: () => navigate('/users'),
-      color: '#689071',
+      color: 'var(--color-primary)',
     },
     {
       key: 'partner',
       icon: <ShopOutlined />,
-      label: 'Добавить партнера',
+      label: t('quickActions.addPartner', 'Добавить партнера'),
       onClick: () => navigate('/partners'),
-      color: '#689071',
+      color: 'var(--color-primary)',
     },
     {
       key: 'promotion',
       icon: <GiftOutlined />,
-      label: 'Создать акцию',
+      label: t('quickActions.createPromotion', 'Создать акцию'),
       onClick: () => navigate('/promotions'),
-      color: '#689071',
+      color: 'var(--color-primary)',
     },
     {
       key: 'report',
       icon: <FileTextOutlined />,
-      label: 'Скачать отчет',
+      label: t('quickActions.downloadReport', 'Скачать отчет'),
       onClick: () => navigate('/transactions'),
-      color: '#689071',
+      color: 'var(--color-primary)',
     },
     {
       key: 'notification',
       icon: <BellOutlined />,
-      label: 'Отправить уведомление',
+      label: t('quickActions.sendNotification', 'Отправить уведомление'),
       onClick: () => navigate('/notifications'),
-      color: '#689071',
+      color: 'var(--color-primary)',
     },
     {
       key: 'settings',
       icon: <SettingOutlined />,
-      label: 'Настройки',
+      label: t('quickActions.settings', 'Настройки'),
       onClick: () => navigate('/settings'),
-      color: '#689071',
+      color: 'var(--color-primary)',
     },
-  ];
+  ], [language, navigate]); // Пересоздаем при изменении языка
 
   return (
     <Card
-      title={<span style={{ color: '#0F2A1D', fontSize: 16, fontWeight: 700 }}>⚡ Быстрые действия</span>}
+      title={<span style={{ color: 'var(--color-text-primary)', fontSize: 16, fontWeight: 700 }}>{t('dashboard.quickActions', '⚡ Быстрые действия')}</span>}
       style={{
         borderRadius: 16,
-        background: 'linear-gradient(135deg, #ffffff 0%, #F0F7EB 100%)',
-        border: '1px solid #E3EED4',
-        boxShadow: '0 2px 12px rgba(15, 42, 29, 0.08)',
+        background: 'var(--card-bg)',
+        border: '1px solid var(--card-border)',
+        boxShadow: 'var(--card-shadow)',
       }}
       className="hover-lift-green"
     >
@@ -79,28 +83,28 @@ export const QuickActions = () => {
               style={{
                 height: 80,
                 borderRadius: 12,
-                borderColor: '#E3EED4',
-                color: '#689071',
+                borderColor: 'var(--color-border)',
+                color: 'var(--color-primary)',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: 8,
                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                background: 'linear-gradient(135deg, #ffffff 0%, #F0F7EB 100%)',
-                boxShadow: '0 2px 8px rgba(15, 42, 29, 0.08)',
+                background: 'var(--card-bg)',
+                boxShadow: 'var(--shadow-sm)',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = '#689071';
-                e.currentTarget.style.background = 'linear-gradient(135deg, #F0F7EB 0%, #E3EED4 100%)';
+                e.currentTarget.style.borderColor = 'var(--color-primary)';
+                e.currentTarget.style.background = 'var(--color-bg-hover)';
                 e.currentTarget.style.transform = 'translateY(-4px) scale(1.02)';
-                e.currentTarget.style.boxShadow = '0 8px 24px rgba(104, 144, 113, 0.2)';
+                e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = '#E3EED4';
-                e.currentTarget.style.background = 'linear-gradient(135deg, #ffffff 0%, #F0F7EB 100%)';
+                e.currentTarget.style.borderColor = 'var(--color-border)';
+                e.currentTarget.style.background = 'var(--card-bg)';
                 e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                e.currentTarget.style.boxShadow = '0 2px 8px rgba(15, 42, 29, 0.08)';
+                e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
               }}
             >
               <span style={{ fontSize: 20 }}>{action.icon}</span>
@@ -112,4 +116,3 @@ export const QuickActions = () => {
     </Card>
   );
 };
-

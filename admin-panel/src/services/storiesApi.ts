@@ -1,8 +1,11 @@
 import axios from 'axios';
 
 // В development используем относительный путь через Vite proxy
-const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '' : 'http://localhost:8000');
-const API_PATH = import.meta.env.DEV ? '/api/v1' : `${API_BASE_URL}/api/v1`;
+const IS_DEV = import.meta.env.DEV;
+const ENV_API_BASE = import.meta.env.VITE_API_URL || '';
+const API_PATH = IS_DEV && ENV_API_BASE
+  ? `${ENV_API_BASE.replace(/\/$/, '')}/api/v1`
+  : '/api/v1';
 
 // Создаем экземпляр axios с настройками
 const apiClient = axios.create({

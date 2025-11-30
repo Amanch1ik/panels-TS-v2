@@ -22,37 +22,37 @@ interface EmptyStateProps {
 
 const typeConfig = {
   users: {
-    icon: <UserOutlined style={{ fontSize: 64, color: '#689071' }} />,
+    icon: <UserOutlined style={{ fontSize: 64, color: 'var(--color-primary)' }} />,
     title: 'Нет пользователей',
     description: 'Пока нет зарегистрированных пользователей в системе',
   },
   partners: {
-    icon: <ShopOutlined style={{ fontSize: 64, color: '#689071' }} />,
+    icon: <ShopOutlined style={{ fontSize: 64, color: 'var(--color-primary)' }} />,
     title: 'Нет партнеров',
     description: 'Добавьте первого партнера в систему',
   },
   transactions: {
-    icon: <TransactionOutlined style={{ fontSize: 64, color: '#689071' }} />,
+    icon: <TransactionOutlined style={{ fontSize: 64, color: 'var(--color-primary)' }} />,
     title: 'Нет транзакций',
     description: 'Транзакции появятся здесь после первых операций',
   },
   promotions: {
-    icon: <GiftOutlined style={{ fontSize: 64, color: '#689071' }} />,
+    icon: <GiftOutlined style={{ fontSize: 64, color: 'var(--color-primary)' }} />,
     title: 'Нет промо-акций',
     description: 'Создайте первую промо-акцию для привлечения клиентов',
   },
   search: {
-    icon: <SearchOutlined style={{ fontSize: 64, color: '#689071' }} />,
+    icon: <SearchOutlined style={{ fontSize: 64, color: 'var(--color-primary)' }} />,
     title: 'Ничего не найдено',
     description: 'Попробуйте изменить параметры поиска',
   },
   'no-data': {
-    icon: <FileOutlined style={{ fontSize: 64, color: '#689071' }} />,
+    icon: <FileOutlined style={{ fontSize: 64, color: 'var(--color-primary)' }} />,
     title: 'Нет данных',
     description: 'Данные появятся здесь после их добавления',
   },
   default: {
-    icon: <InboxOutlined style={{ fontSize: 64, color: '#689071' }} />,
+    icon: <InboxOutlined style={{ fontSize: 64, color: 'var(--color-primary)' }} />,
     title: 'Пусто',
     description: 'Здесь пока ничего нет',
   },
@@ -86,10 +86,10 @@ export const EmptyState = ({
       }}
       description={
         <div>
-          <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 8, color: '#0F2A1D' }}>
+          <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 8, color: 'var(--color-text-primary)' }}>
             {title || config.title}
           </div>
-          <div style={{ color: '#666', fontSize: 14 }}>
+          <div style={{ color: 'var(--color-text-tertiary)', fontSize: 14 }}>
             {description || config.description}
           </div>
         </div>
@@ -101,8 +101,8 @@ export const EmptyState = ({
           size="large"
           onClick={handleAction}
           style={{
-            backgroundColor: '#689071',
-            borderColor: '#689071',
+            backgroundColor: 'var(--color-primary)',
+            borderColor: 'var(--color-primary)',
             borderRadius: 8,
             height: 40,
             paddingLeft: 24,

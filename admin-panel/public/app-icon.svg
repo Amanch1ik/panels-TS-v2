@@ -1,0 +1,25 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#008b5f"/>
+      <stop offset="100%" stop-color="#00c97a"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="512" height="512" fill="url(#bg)"/>
+  <!-- stylized phi / Yess mark -->
+  <path
+    d="M 176 160
+       C 176 240 256 216 256 256
+       C 256 296 208 296 208 360
+       M 256 256
+       C 256 216 336 224 336 176
+       C 336 144 312 120 280 120"
+    fill="none"
+    stroke="#ffffff"
+    stroke-width="40"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>
+
+

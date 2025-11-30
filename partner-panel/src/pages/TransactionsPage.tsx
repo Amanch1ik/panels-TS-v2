@@ -29,39 +29,8 @@ export const TransactionsPage = () => {
     retry: 1,
   });
 
-  // Мок данные для демонстрации (если API недоступен)
-  const mockTransactions = [
-    {
-      id: 1,
-      date: '2025-01-15',
-      amount: 1500.00,
-      type: 'income',
-      description: 'Оплата за услуги',
-      user: { name: 'Иван Петров', email: 'ivan@example.com' },
-      status: 'completed'
-    },
-    {
-      id: 2,
-      date: '2025-01-14',
-      amount: -500.00,
-      type: 'expense',
-      description: 'Комиссия сервиса',
-      user: { name: 'Мария Сидорова', email: 'maria@example.com' },
-      status: 'completed'
-    },
-    {
-      id: 3,
-      date: '2025-01-13',
-      amount: 2200.00,
-      type: 'income',
-      description: 'Продажа товара',
-      user: { name: 'Алексей Иванов', email: 'alex@example.com' },
-      status: 'pending'
-    },
-  ];
-
-  // Используем данные из API или мок данные
-  const allTransactions = toArray(transactionsResponse, mockTransactions);
+  // Используем данные из API
+  const allTransactions = toArray(transactionsResponse, []);
 
   const handleExport = (format: 'csv' | 'excel' | 'json' = 'csv') => {
     // Проверяем, что есть данные для экспорта
@@ -132,86 +101,123 @@ export const TransactionsPage = () => {
       dataIndex: 'date',
       key: 'date',
       sorter: true,
+      render: (date: string) => date ? dayjs(date).format('DD.MM.YYYY HH:mm') : '-',
     },
     {
       title: 'Пользователь',
       key: 'user',
       sorter: true,
-      render: (_: any, record: any) => (
-        <Space>
-          <div
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: '50%',
-              background: '#689071',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#ffffff',
-              fontWeight: 600,
-            }}
-          >
-            {record.user.name.charAt(0)}
-          </div>
-          <span>{record.user.name}</span>
-        </Space>
-      ),
+      render: (_: any, record: any) => {
+        const userName = record.user?.name || record.user_name || `Пользователь ${record.user_id || record.id}`;
+        const firstLetter = userName.charAt(0).toUpperCase();
+        return (
+          <Space>
+            <div
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: '50%',
+                background: '#689071',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#ffffff',
+                fontWeight: 600,
+              }}
+            >
+              {firstLetter}
+            </div>
+            <span>{userName}</span>
+          </Space>
+        );
+      },
     },
     {
       title: 'Партнер',
       key: 'partner',
       sorter: true,
-      render: (_: any, record: any) => (
-        <Space>
-          <div
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: 4,
-              background: '#F0F7EB',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#689071',
-              fontWeight: 600,
-              fontSize: 12,
-            }}
-          >
-            {record.partner.logo.charAt(0)}
-          </div>
-          <span>{record.partner.name}</span>
-        </Space>
-      ),
+      render: (_: any, record: any) => {
+        const partnerName = record.partner?.name || record.partner_name || 'Партнер';
+        const firstLetter = partnerName.charAt(0).toUpperCase();
+        return (
+          <Space>
+            <div
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 4,
+                background: '#F0F7EB',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#689071',
+                fontWeight: 600,
+                fontSize: 12,
+              }}
+            >
+              {firstLetter}
+            </div>
+            <span>{partnerName}</span>
+          </Space>
+        );
+      },
     },
     {
       title: 'Сумма',
       dataIndex: 'amount',
       key: 'amount',
       sorter: true,
-      render: (amount: number) => (
-        <span style={{ color: amount > 0 ? '#689071' : '#ff4d4f', fontWeight: 600 }}>
-          {amount > 0 ? '+' : ''}{amount.toLocaleString()} Yess!Coin
-        </span>
-      ),
+      render: (amount: number) => {
+        if (amount === null || amount === undefined) return '-';
+        const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+        if (isNaN(numAmount)) return '-';
+        return (
+          <span style={{ color: numAmount > 0 ? '#689071' : '#ff4d4f', fontWeight: 600 }}>
+            {numAmount > 0 ? '+' : ''}{numAmount.toLocaleString('ru-RU')} Yess!Coin
+          </span>
+        );
+      },
     },
     {
       title: 'Тип',
       dataIndex: 'type',
       key: 'type',
       sorter: true,
-      render: (type: string) => (
-        <Tag color={type === 'Начисление' ? 'green' : 'blue'}>{type}</Tag>
-      ),
+      render: (type: string) => {
+        if (!type) return '-';
+        const typeLower = type.toLowerCase();
+        const isIncome = typeLower.includes('income') || typeLower.includes('начисл') || typeLower.includes('пополн');
+        const isExpense = typeLower.includes('expense') || typeLower.includes('списан') || typeLower.includes('вывод');
+        const displayType = isIncome ? 'Начисление' : isExpense ? 'Списание' : type;
+        return (
+          <Tag color={isIncome ? 'green' : isExpense ? 'blue' : 'default'}>{displayType}</Tag>
+        );
+      },
     },
     {
       title: 'Статус',
       dataIndex: 'status',
       key: 'status',
       sorter: true,
-      render: (status: string) => (
-        <Tag color="green">{status}</Tag>
-      ),
+      render: (status: string) => {
+        if (!status) return '-';
+        const statusLower = status.toLowerCase();
+        const color = statusLower.includes('completed') || statusLower.includes('success') || statusLower.includes('успешно') || statusLower.includes('завершено')
+          ? 'green'
+          : statusLower.includes('pending') || statusLower.includes('в процессе') || statusLower.includes('ожидание')
+          ? 'orange'
+          : statusLower.includes('failed') || statusLower.includes('error') || statusLower.includes('ошибка') || statusLower.includes('отменено')
+          ? 'red'
+          : 'default';
+        const displayStatus = statusLower.includes('completed') || statusLower.includes('success')
+          ? 'Завершено'
+          : statusLower.includes('pending')
+          ? 'В процессе'
+          : statusLower.includes('failed') || statusLower.includes('error')
+          ? 'Ошибка'
+          : status;
+        return <Tag color={color}>{displayStatus}</Tag>;
+      },
     },
   ];
 
@@ -258,24 +264,13 @@ export const TransactionsPage = () => {
             style={{ borderRadius: 12 }}
           />
           <Select
-            defaultValue="Начисление"
+            placeholder="Тип транзакции"
             style={{ width: 200, borderRadius: 12 }}
+            allowClear
             options={[
-              { label: 'Начисление', value: 'Начисление' },
-              { label: 'Списание', value: 'Списание' },
+              { label: 'Начисление', value: 'income' },
+              { label: 'Списание', value: 'expense' },
             ]}
-          />
-          <Select
-            defaultValue="Супермаркет №1"
-            style={{ width: 200, borderRadius: 12 }}
-            options={[
-              { label: 'Супермаркет №1', value: 'Супермаркет №1' },
-            ]}
-          />
-          <Input
-            placeholder="Сотрудник"
-            defaultValue="Актан Ж."
-            style={{ width: 200, borderRadius: 12 }}
           />
         </Space>
       </Card>

@@ -8,9 +8,8 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-5.0-646CFF?logo=vite)](https://vitejs.dev/)
 [![Ant Design](https://img.shields.io/badge/Ant%20Design-5.12-0170FE?logo=ant-design)](https://ant.design/)
-[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-[Features](#-features) • [Quick Start](#-quick-start) • [Documentation](#-documentation) • [Development](#-development)
+[Features](#-features) • [Quick Start](#-quick-start) • [Architecture](#-architecture) • [Documentation](#-documentation)
 
 </div>
 
@@ -23,7 +22,7 @@ This repository contains two modern web applications built with React and TypeSc
 - **👨‍💼 Admin Panel** - Comprehensive administration dashboard for system management
 - **🤝 Partner Panel** - Partner portal for business owners and managers
 
-Both applications are built with modern technologies and best practices, featuring responsive design, internationalization, and real-time updates.
+Both applications feature responsive design, internationalization, real-time updates, and comprehensive monitoring.
 
 ---
 
@@ -39,6 +38,7 @@ Both applications are built with modern technologies and best practices, featuri
 - **Maps**: React Leaflet with OpenStreetMap
 - **Styling**: CSS Modules + Ant Design Theme
 - **Internationalization**: i18n support (Russian, English, Kyrgyz)
+- **Monitoring**: Comprehensive API metrics, error logging, and performance monitoring
 
 ### 🎨 Admin Panel Features
 
@@ -50,6 +50,7 @@ Both applications are built with modern technologies and best practices, featuri
 - 🔔 **Notifications** - System-wide notification center
 - 🎁 **Promotions** - Campaign and promotion management
 - 📺 **Stories** - Content management system
+- 📊 **Monitoring** - System metrics and performance monitoring
 - ⚙️ **Settings** - System configuration and preferences
 - 📋 **Audit Logs** - Activity tracking and compliance
 
@@ -61,7 +62,56 @@ Both applications are built with modern technologies and best practices, featuri
 - 🎁 **Promotions** - Create and manage promotional campaigns
 - 💰 **Transactions** - View transaction history and reports
 - 👥 **Employees** - Team and access management
-- 💳 **Billing** - Subscription and payment information
+
+---
+
+## 🏗️ Architecture
+
+### Project Structure
+
+```
+panels-ts-v2/
+├── admin-panel/              # Admin Panel Application
+│   ├── src/
+│   │   ├── components/       # Reusable React components
+│   │   ├── pages/            # Page components
+│   │   ├── services/         # API services
+│   │   ├── hooks/            # Custom React hooks
+│   │   ├── store/            # State management
+│   │   ├── styles/           # CSS and themes
+│   │   ├── utils/            # Utility functions
+│   │   └── types/            # TypeScript types
+│   ├── public/               # Static assets
+│   └── package.json
+│
+├── partner-panel/            # Partner Panel Application
+│   ├── src/
+│   │   ├── components/       # Reusable React components
+│   │   ├── pages/            # Page components
+│   │   ├── services/         # API services
+│   │   ├── hooks/            # Custom React hooks
+│   │   ├── store/            # State management
+│   │   ├── styles/           # CSS and themes
+│   │   └── utils/            # Utility functions
+│   ├── public/               # Static assets
+│   └── package.json
+│
+├── shared/                   # Shared modules
+│   └── monitoring/           # Monitoring system
+│       ├── apiMetrics.ts     # API metrics tracking
+│       ├── errorLogger.ts    # Error logging
+│       ├── performanceMonitor.ts  # Performance monitoring
+│       └── index.ts          # Exports
+│
+├── docs/                     # Documentation
+│   ├── ARCHITECTURE.md       # Architecture details
+│   ├── MONITORING.md         # Monitoring guide
+│   └── CHANGELOG.md          # Changelog
+│
+└── README.md                 # This file
+```
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed architecture documentation.
 
 ---
 
@@ -125,7 +175,9 @@ Create `.env` files in each panel directory:
 VITE_API_URL=http://localhost:8000
 VITE_ENV=development
 VITE_WS_ENABLED=false
-VITE_TRANSIT_ENABLED=true
+VITE_ENABLE_METRICS=true
+VITE_ENABLE_ERROR_LOGGING=true
+VITE_ENABLE_PERFORMANCE_MONITORING=true
 ```
 
 ### Available Ports
@@ -136,39 +188,16 @@ VITE_TRANSIT_ENABLED=true
 
 ---
 
-## 📁 Project Structure
+## 📊 Monitoring
 
-```
-panels-ts-v2/
-├── admin-panel/              # Admin Panel Application
-│   ├── src/
-│   │   ├── components/       # Reusable React components
-│   │   ├── pages/            # Page components
-│   │   ├── services/         # API services
-│   │   ├── hooks/            # Custom React hooks
-│   │   ├── store/            # State management
-│   │   ├── styles/           # CSS and themes
-│   │   ├── utils/            # Utility functions
-│   │   └── types/            # TypeScript types
-│   ├── public/               # Static assets
-│   ├── package.json
-│   └── vite.config.ts
-│
-├── partner-panel/            # Partner Panel Application
-│   ├── src/
-│   │   ├── components/       # Reusable React components
-│   │   ├── pages/            # Page components
-│   │   ├── services/         # API services
-│   │   ├── hooks/            # Custom React hooks
-│   │   ├── store/            # State management
-│   │   ├── styles/           # CSS and themes
-│   │   └── utils/            # Utility functions
-│   ├── public/               # Static assets
-│   ├── package.json
-│   └── vite.config.ts
-│
-└── README.md
-```
+Both panels include comprehensive monitoring capabilities:
+
+- **API Metrics** - Track all API requests, response times, and errors
+- **Error Logging** - Centralized error tracking and analysis
+- **Performance Monitoring** - Web Vitals and performance metrics
+- **Dashboard** - Real-time monitoring dashboard (`/monitoring` in admin panel)
+
+See [docs/MONITORING.md](docs/MONITORING.md) for detailed monitoring documentation.
 
 ---
 
@@ -201,7 +230,7 @@ npm run test:coverage
 
 ### Code Style
 
-- TypeScript strict mode (partner-panel)
+- TypeScript strict mode
 - ESLint for code quality
 - Prettier-friendly formatting
 - Component-based architecture
@@ -268,6 +297,14 @@ Translation files are located in `src/i18n/translations.ts`
 
 ---
 
+## 📚 Documentation
+
+- **[Architecture](docs/ARCHITECTURE.md)** - Project architecture and structure
+- **[Monitoring](docs/MONITORING.md)** - Monitoring system guide
+- **[Changelog](docs/CHANGELOG.md)** - History of changes
+
+---
+
 ## 🤝 Contributing
 
 1. Fork the repository
@@ -284,21 +321,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-## 👥 Authors
-
-**YESS! GO Development Team**
-
----
-
-## 🙏 Acknowledgments
-
-- [React](https://react.dev/) - UI library
-- [Ant Design](https://ant.design/) - Component library
-- [Vite](https://vitejs.dev/) - Build tool
-- [React Leaflet](https://react-leaflet.js.org/) - Maps integration
-
----
-
 <div align="center">
 
 **Made with ❤️ for YESS! GO**
@@ -306,4 +328,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ⭐ Star this repo if you find it helpful!
 
 </div>
-

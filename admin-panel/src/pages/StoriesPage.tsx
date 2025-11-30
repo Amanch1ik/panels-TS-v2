@@ -228,9 +228,9 @@ export const StoriesPage = () => {
       key: 'title',
       render: (_: any, record: Story) => (
         <div>
-          <div style={{ fontWeight: 500, color: '#0F2A1D' }}>{record.title}</div>
+          <div style={{ fontWeight: 500, color: 'var(--color-text-primary)' }}>{record.title}</div>
           {record.partner_name && (
-            <div style={{ fontSize: 12, color: '#689071' }}>Партнер: {record.partner_name}</div>
+            <div style={{ fontSize: 12, color: 'var(--color-primary)' }}>Партнер: {record.partner_name}</div>
           )}
         </div>
       ),
@@ -257,8 +257,9 @@ export const StoriesPage = () => {
       render: (_: any, record: Story) => (
         <div>
           <div>{dayjs(record.expires_at).format('DD.MM.YYYY HH:mm')}</div>
-          <div style={{ fontSize: 12, color: '#999' }}>
-            {dayjs(record.expires_at).from(dayjs(), true)}
+          <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>
+            {/* Метод from доступен через плагин relativeTime, поэтому приводим к any, чтобы избежать проблем с типами */}
+            {(dayjs(record.expires_at) as any).from(dayjs(), true)}
           </div>
         </div>
       ),

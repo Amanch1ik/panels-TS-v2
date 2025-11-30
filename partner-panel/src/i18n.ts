@@ -64,5 +64,8 @@ if (savedLanguage && (savedLanguage === 'ru' || savedLanguage === 'en' || savedL
 // Экспортируем функцию перевода для удобства
 export const t = (key: string, defaultValue?: string) => i18n.t(key, defaultValue);
 
+// Переэкспортируем тип языка, чтобы можно было импортировать его из './i18n'
+export type { Language } from './i18n/translations';
+
 export default i18n;
 

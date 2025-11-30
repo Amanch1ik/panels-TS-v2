@@ -6,6 +6,8 @@ import enUS from 'antd/locale/en_US';
 import React, { Suspense, lazy } from 'react';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { MainLayout } from './components/MainLayout';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { initializeMonitoring } from '../../shared/monitoring';
 
 // Lazy loading для страниц
 const LoginPage = lazy(() => import('./pages/LoginPage').then(module => ({ default: module.LoginPage })));
@@ -25,9 +27,14 @@ const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       // Отключаем автоматическое обновление при подключении к сети
       refetchOnReconnect: false,
+      // Отключаем автоматическое обновление при монтировании (чтобы не было дублей)
+      refetchOnMount: false,
       // Устанавливаем разумное время жизни кэша
       staleTime: 5 * 60 * 1000, // 5 минут
       gcTime: 10 * 60 * 1000, // 10 минут (время жизни в GC)
+      // Отключаем автоматические интервалы обновления (используем WebSocket для real-time)
+      refetchInterval: false,
+      refetchIntervalInBackground: false,
       // Повторяем запрос только при ошибках сети
       retry: (failureCount, error) => {
         // Не повторяем при 4xx ошибках (клиентские ошибки)
@@ -37,10 +44,18 @@ const queryClient = new QueryClient({
             return false;
           }
         }
-        // Повторяем до 3 раз при других ошибках
-        return failureCount < 3;
+        // Не повторяем при отмененных запросах (499)
+        if (error && typeof error === 'object' && 'name' in error) {
+          if ((error as any).name === 'CanceledError' || (error as any).message?.includes('canceled')) {
+            return false;
+          }
+        }
+        // Повторяем до 2 раз при других ошибках (уменьшено с 3)
+        return failureCount < 2;
       },
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      // Включаем структурное сравнение для лучшей дедупликации
+      structuralSharing: true,
     },
     mutations: {
       // Для мутаций используем оптимистичные обновления где возможно
@@ -68,6 +83,11 @@ const LoadingFallback = () => (
 function App() {
   const language = localStorage.getItem('language') || 'ru';
   const antdLocale = language === 'en' ? enUS : ruRU;
+  
+  // Инициализация системы мониторинга при загрузке приложения
+  React.useEffect(() => {
+    initializeMonitoring();
+  }, []);
   
   // Глобальная обработка ошибок
   React.useEffect(() => {
@@ -113,88 +133,90 @@ function App() {
   }, []);
   
   return (
-    <QueryClientProvider client={queryClient}>
-      <ConfigProvider
-        locale={antdLocale}
-        theme={{
-          token: {
-            colorPrimary: '#689071',
-            borderRadius: 12,
-            fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-            colorSuccess: '#52c41a',
-            colorError: '#ff4d4f',
-            colorWarning: '#AEC380',
-            colorInfo: '#1890ff',
-          },
-          components: {
-            Menu: {
-              itemSelectedBg: 'linear-gradient(135deg, #689071 0%, #AEC380 100%)',
-              itemSelectedColor: '#ffffff',
-              itemHoverBg: '#E3EED4',
-              itemActiveBg: 'linear-gradient(135deg, #689071 0%, #AEC380 100%)',
-              itemBorderRadius: 12,
-            },
-            Button: {
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <ConfigProvider
+          locale={antdLocale}
+          theme={{
+            token: {
+              colorPrimary: '#689071',
               borderRadius: 12,
-              primaryShadow: '0 4px 12px rgba(104, 144, 113, 0.3)',
-              fontWeight: 500,
+              fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+              colorSuccess: '#52c41a',
+              colorError: '#ff4d4f',
+              colorWarning: '#AEC380',
+              colorInfo: '#1890ff',
             },
-            Card: {
-              borderRadius: 16,
-              boxShadow: '0 2px 12px rgba(15, 42, 29, 0.08)',
-              paddingLG: 24,
+            components: {
+              Menu: {
+                itemSelectedBg: 'linear-gradient(135deg, #689071 0%, #AEC380 100%)',
+                itemSelectedColor: '#ffffff',
+                itemHoverBg: '#E3EED4',
+                itemActiveBg: 'linear-gradient(135deg, #689071 0%, #AEC380 100%)',
+                itemBorderRadius: 12,
+              },
+              Button: {
+                borderRadius: 12,
+                primaryShadow: '0 4px 12px rgba(104, 144, 113, 0.3)',
+                fontWeight: 500,
+              },
+              Card: {
+                borderRadius: 16,
+                boxShadow: '0 2px 12px rgba(15, 42, 29, 0.08)',
+                paddingLG: 24,
+              },
+              Input: {
+                borderRadius: 12,
+                activeBorderColor: '#689071',
+                hoverBorderColor: '#AEC380',
+              },
+              Table: {
+                borderRadius: 12,
+                headerBg: '#F0F7EB',
+                headerColor: '#0F2A1D',
+              },
             },
-            Input: {
-              borderRadius: 12,
-              activeBorderColor: '#689071',
-              hoverBorderColor: '#AEC380',
-            },
-            Table: {
-              borderRadius: 12,
-              headerBg: '#F0F7EB',
-              headerColor: '#0F2A1D',
-            },
-          },
-        }}
-      >
-        <AntApp>
-          <BrowserRouter
-            future={{
-              v7_startTransition: true,
-              v7_relativeSplatPath: true,
-            }}
-          >
-            <Suspense fallback={<LoadingFallback />}>
-              <Routes>
-                <Route path="/login" element={<LoginPage />} />
-                <Route
-                  path="/*"
-                  element={
-                    <ProtectedRoute>
-                      <MainLayout>
-                        <Suspense fallback={<LoadingFallback />}>
-                          <Routes>
+          }}
+        >
+          <AntApp>
+            <BrowserRouter
+              future={{
+                v7_startTransition: true,
+                v7_relativeSplatPath: true,
+              }}
+            >
+              <Suspense fallback={<LoadingFallback />}>
+                <Routes>
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route
+                    path="/*"
+                    element={
+                      <ProtectedRoute>
+                        <MainLayout>
+                          <Suspense fallback={<LoadingFallback />}>
+                            <Routes>
             <Route path="/" element={<DashboardPage />} />
-                            <Route path="/profile" element={<ProfilePage />} />
-                            <Route path="/locations" element={<LocationsPage />} />
-                            <Route path="/promotions" element={<PromotionsPage />} />
-                            <Route path="/transactions" element={<TransactionsPage />} />
-                            <Route path="/employees" element={<EmployeesPage />} />
+                              <Route path="/profile" element={<ProfilePage />} />
+                              <Route path="/locations" element={<LocationsPage />} />
+                              <Route path="/promotions" element={<PromotionsPage />} />
+                              <Route path="/transactions" element={<TransactionsPage />} />
+                              <Route path="/employees" element={<EmployeesPage />} />
             <Route path="/settings" element={<SettingsPage />} />
-                            {/* Биллинг и интеграции удалены - партнеры не должны иметь к ним доступ */}
-                            <Route path="*" element={<Navigate to="/" replace />} />
-                          </Routes>
-                        </Suspense>
-                      </MainLayout>
-                    </ProtectedRoute>
-                  }
-                />
-              </Routes>
-            </Suspense>
-          </BrowserRouter>
-        </AntApp>
-      </ConfigProvider>
-    </QueryClientProvider>
+                              {/* Биллинг и интеграции удалены - партнеры не должны иметь к ним доступ */}
+                              <Route path="*" element={<Navigate to="/" replace />} />
+                            </Routes>
+                          </Suspense>
+                        </MainLayout>
+                      </ProtectedRoute>
+                    }
+                  />
+                </Routes>
+              </Suspense>
+            </BrowserRouter>
+          </AntApp>
+        </ConfigProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 

@@ -23,10 +23,10 @@ interface GlobalSearchProps {
 }
 
 const typeIcons = {
-  user: <UserOutlined style={{ color: '#1890ff' }} />,
-  partner: <ShopOutlined style={{ color: '#52c41a' }} />,
-  transaction: <TransactionOutlined style={{ color: '#faad14' }} />,
-  promotion: <GiftOutlined style={{ color: '#eb2f96' }} />,
+  user: <UserOutlined style={{ color: 'var(--color-info)' }} />,
+  partner: <ShopOutlined style={{ color: 'var(--color-success)' }} />,
+  transaction: <TransactionOutlined style={{ color: 'var(--color-warning)' }} />,
+  promotion: <GiftOutlined style={{ color: 'var(--color-primary)' }} />,
 };
 
 const typeLabels = {

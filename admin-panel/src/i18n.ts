@@ -29,7 +29,7 @@ class I18n {
     return this.currentLanguage;
   }
 
-  t(key: string, defaultValue?: string): string {
+  t(key: string, defaultValue?: string, params?: Record<string, string | number>): string {
     const keys = key.split('.');
     let value: any = translations[this.currentLanguage];
     
@@ -37,11 +37,22 @@ class I18n {
       if (value && typeof value === 'object' && k in value) {
         value = value[k];
       } else {
-        return defaultValue || key;
+        return this.replaceParams(defaultValue || key, params);
       }
     }
     
-    return typeof value === 'string' ? value : (defaultValue || key);
+    const result = typeof value === 'string' ? value : (defaultValue || key);
+    return this.replaceParams(result, params);
+  }
+
+  private replaceParams(str: string, params?: Record<string, string | number>): string {
+    if (!params || !str) return str;
+    
+    let result = str;
+    Object.entries(params).forEach(([key, value]) => {
+      result = result.replace(new RegExp(`\\{${key}\\}`, 'g'), String(value));
+    });
+    return result;
   }
 
   // Подписка на изменения языка
@@ -62,7 +73,12 @@ if (savedLanguage && (savedLanguage === 'ru' || savedLanguage === 'en' || savedL
 }
 
 // Экспортируем функцию перевода для удобства
-export const t = (key: string, defaultValue?: string) => i18n.t(key, defaultValue);
+export const t = (key: string, defaultValue?: string, params?: Record<string, string | number>) => 
+  i18n.t(key, defaultValue, params);
+
+// Переэкспортируем тип языка, чтобы его можно было импортировать из './i18n'
+export type { Language } from './i18n/translations';
 
 export default i18n;
+
 

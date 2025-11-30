@@ -1,12 +1,15 @@
-import { Drawer, List, Badge, Empty, Button, Space } from 'antd';
+import { Drawer, List, Badge, Empty, Button, Space, Spin, message } from 'antd';
 import { BellOutlined, CheckOutlined, DeleteOutlined } from '@ant-design/icons';
-import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { notificationsApi } from '../services/api';
+import { formatRelativeTime } from '../utils/dateUtils';
+import { toArray } from '../utils/arrayUtils';
 
 interface Notification {
-  id: string;
+  id: string | number;
   title: string;
   message: string;
-  type: 'info' | 'success' | 'warning' | 'error';
+  type?: 'info' | 'success' | 'warning' | 'error';
   timestamp: string;
   read: boolean;
 }
@@ -14,27 +17,103 @@ interface Notification {
 interface NotificationCenterProps {
   open: boolean;
   onClose: () => void;
-  notifications?: Notification[];
 }
 
-export const NotificationCenter = ({ open, onClose, notifications = [] }: NotificationCenterProps) => {
-  const [localNotifications, setLocalNotifications] = useState<Notification[]>(notifications);
+export const NotificationCenter = ({ open, onClose }: NotificationCenterProps) => {
+  const queryClient = useQueryClient();
 
-  const markAsRead = (id: string) => {
-    setLocalNotifications(prev =>
-      prev.map(n => n.id === id ? { ...n, read: true } : n)
-    );
+  // Загрузка уведомлений из API - ТОЛЬКО реальные данные
+  const { data: notificationsResponse, isLoading } = useQuery({
+    queryKey: ['partner-notifications'],
+    queryFn: async () => {
+      try {
+        const response = await notificationsApi.getNotifications({ page: 1, limit: 50 });
+        // Обрабатываем разные форматы ответа
+        const notifications = toArray(
+          response?.data?.notifications || 
+          response?.data || 
+          response?.notifications || 
+          [],
+          []
+        );
+        return notifications;
+      } catch (error: any) {
+        console.error('Error fetching notifications:', error);
+        return [];
+      }
+    },
+    retry: 1,
+    enabled: open, // Загружаем только когда панель открыта
+    staleTime: 30 * 1000, // 30 секунд
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+  });
+
+  // Мутация для отметки как прочитанное
+  const markAsReadMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await notificationsApi.markNotificationAsRead(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['partner-notifications'] });
+    },
+    onError: (error: any) => {
+      console.error('Error marking notification as read:', error);
+      message.error('Не удалось отметить уведомление как прочитанное');
+    },
+  });
+
+  // Мутация для удаления
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await notificationsApi.deleteNotification(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['partner-notifications'] });
+      message.success('Уведомление удалено');
+    },
+    onError: (error: any) => {
+      console.error('Error deleting notification:', error);
+      message.error('Не удалось удалить уведомление');
+    },
+  });
+
+  // Преобразуем данные из API в формат Notification
+  const notifications: Notification[] = toArray(notificationsResponse, []).map((item: any) => ({
+    id: item.id || item.notification_id || Math.random().toString(),
+    title: item.title || item.subject || 'Уведомление',
+    message: item.message || item.content || item.body || '',
+    type: item.type || item.notification_type || 'info',
+    timestamp: item.timestamp || item.created_at || item.date || new Date().toISOString(),
+    read: item.read !== undefined ? item.read : item.is_read !== undefined ? item.is_read : false,
+  }));
+
+  const handleMarkAsRead = (id: string | number) => {
+    const numId = typeof id === 'string' ? parseInt(id, 10) : id;
+    if (!isNaN(numId)) {
+      markAsReadMutation.mutate(numId);
+    }
   };
 
-  const deleteNotification = (id: string) => {
-    setLocalNotifications(prev => prev.filter(n => n.id !== id));
+  const handleDelete = (id: string | number) => {
+    const numId = typeof id === 'string' ? parseInt(id, 10) : id;
+    if (!isNaN(numId)) {
+      deleteMutation.mutate(numId);
+    }
   };
 
-  const markAllAsRead = () => {
-    setLocalNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  const handleMarkAllAsRead = () => {
+    // Отмечаем все непрочитанные уведомления
+    const unreadNotifications = notifications.filter(n => !n.read);
+    unreadNotifications.forEach(notification => {
+      const numId = typeof notification.id === 'string' ? parseInt(notification.id, 10) : notification.id;
+      if (!isNaN(numId)) {
+        markAsReadMutation.mutate(numId);
+      }
+    });
   };
 
-  const unreadCount = localNotifications.filter(n => !n.read).length;
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
     <Drawer
@@ -48,7 +127,13 @@ export const NotificationCenter = ({ open, onClose, notifications = [] }: Notifi
             )}
           </Space>
           {unreadCount > 0 && (
-            <Button type="link" size="small" onClick={markAllAsRead} style={{ color: '#689071' }}>
+            <Button 
+              type="link" 
+              size="small" 
+              onClick={handleMarkAllAsRead}
+              loading={markAsReadMutation.isPending}
+              style={{ color: '#689071' }}
+            >
               Отметить все как прочитанные
             </Button>
           )}
@@ -62,7 +147,11 @@ export const NotificationCenter = ({ open, onClose, notifications = [] }: Notifi
         background: 'linear-gradient(135deg, #F0F7EB 0%, #E3EED4 100%)',
       }}
     >
-      {localNotifications.length === 0 ? (
+      {isLoading ? (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
+          <Spin size="large" />
+        </div>
+      ) : notifications.length === 0 ? (
         <Empty
           description="Нет уведомлений"
           image={Empty.PRESENTED_IMAGE_SIMPLE}
@@ -70,7 +159,7 @@ export const NotificationCenter = ({ open, onClose, notifications = [] }: Notifi
         />
       ) : (
         <List
-          dataSource={localNotifications}
+          dataSource={notifications}
           renderItem={(item) => (
             <List.Item
               style={{
@@ -86,14 +175,16 @@ export const NotificationCenter = ({ open, onClose, notifications = [] }: Notifi
                   <Button
                     type="text"
                     icon={<CheckOutlined />}
-                    onClick={() => markAsRead(item.id)}
+                    onClick={() => handleMarkAsRead(item.id)}
+                    loading={markAsReadMutation.isPending}
                     style={{ color: '#689071' }}
                   />
                 ),
                 <Button
                   type="text"
                   icon={<DeleteOutlined />}
-                  onClick={() => deleteNotification(item.id)}
+                  onClick={() => handleDelete(item.id)}
+                  loading={deleteMutation.isPending}
                   danger
                 />,
               ]}
@@ -113,7 +204,7 @@ export const NotificationCenter = ({ open, onClose, notifications = [] }: Notifi
                   <div>
                     <div style={{ color: '#689071', fontSize: 13 }}>{item.message}</div>
                     <div style={{ color: '#AEC380', fontSize: 11, marginTop: 4 }}>
-                      {item.timestamp}
+                      {formatRelativeTime(item.timestamp)}
                     </div>
                   </div>
                 }
@@ -125,4 +216,3 @@ export const NotificationCenter = ({ open, onClose, notifications = [] }: Notifi
     </Drawer>
   );
 };
-

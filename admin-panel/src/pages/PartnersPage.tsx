@@ -265,21 +265,16 @@ export const PartnersPage = () => {
     }
   };
 
-  // Генерация случайного рейтинга для демо
-  const getRating = (id: number) => {
-    return (id % 6); // 0-5 звезд
-  };
-
   // Генерация статуса
   const getStatus = (partner: Partner) => {
-    const status = partner.status || (partner as any).is_active !== false ? 'active' : 'inactive';
+    const status: string = partner.status || ((partner as any).is_active !== false ? 'active' : 'inactive');
     switch (status) {
       case 'active':
-        return { text: t('partners.approved', 'Активен'), color: '#52c41a' };
+        return { text: t('partners.approved', 'Активен'), color: 'var(--color-success)' };
       case 'pending':
-        return { text: t('partners.pending', 'На проверке'), color: '#faad14' };
+        return { text: t('partners.pending', 'На проверке'), color: 'var(--color-warning, #faad14)' };
       case 'rejected':
-        return { text: t('partners.rejected', 'Отклонен'), color: '#ff4d4f' };
+        return { text: t('partners.rejected', 'Отклонен'), color: 'var(--color-error)' };
       case 'inactive':
         return { text: t('partners.inactive', 'Неактивен'), color: '#8c8c8c' };
       default:
@@ -304,8 +299,8 @@ export const PartnersPage = () => {
           src={record.logo_url}
           icon={<ShopOutlined />}
           style={{
-            backgroundColor: record.logo_url ? 'transparent' : '#52c41a',
-            color: '#ffffff',
+            backgroundColor: record.logo_url ? 'transparent' : 'var(--color-success)',
+            color: 'var(--color-text-inverse)',
           }}
         />
       ),
@@ -317,7 +312,7 @@ export const PartnersPage = () => {
       width: 200,
       render: (name: string) => (
         <div>
-          <div style={{ fontWeight: 500, color: '#0F2A1D' }}>{name || t('partners.defaultName', 'Глобус')}</div>
+          <div style={{ fontWeight: 500, color: 'var(--color-text-primary)' }}>{name || t('partners.defaultName', 'Глобус')}</div>
         </div>
       ),
     },
@@ -333,7 +328,11 @@ export const PartnersPage = () => {
       key: 'rating',
       width: 150,
       render: (_: any, record: Partner) => {
-        const rating = getRating(record.id);
+        const ratingValue = (record as any).rating;
+        if (ratingValue == null) {
+          return <span style={{ color: 'var(--color-text-tertiary)' }}>—</span>;
+        }
+        const rating = Math.max(0, Math.min(5, Number(ratingValue)));
         return (
           <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
             {[...Array(5)].map((_, i) => (
@@ -363,9 +362,9 @@ export const PartnersPage = () => {
             style={{
               padding: '4px 12px',
               borderRadius: 4,
-              color: status.color === '#262626' ? '#262626' : '#ffffff',
+              color: status.color === '#262626' ? '#262626' : 'var(--color-text-inverse)',
               fontWeight: 500,
-              border: status.color === '#262626' ? '1px solid #d9d9d9' : 'none',
+              border: status.color === '#262626' ? '1px solid var(--color-border)' : 'none',
             }}
           >
             {status.text}
@@ -400,7 +399,7 @@ export const PartnersPage = () => {
           },
         ];
 
-        const partnerStatus = record.status || 'pending';
+        const partnerStatus: string = record.status || 'pending';
         if (partnerStatus === 'pending') {
           actionMenuItems.unshift({
             key: 'approve',
@@ -434,7 +433,7 @@ export const PartnersPage = () => {
                 size="small"
                 icon={<CheckOutlined />}
                 onClick={() => handleApprove(record.id)}
-                style={{ backgroundColor: '#689071', borderColor: '#689071' }}
+                style={{ background: 'var(--color-primary)', borderColor: 'var(--color-primary)' }}
               >
                 {t('partners.approve', 'Одобрить')}
               </Button>
@@ -524,8 +523,8 @@ export const PartnersPage = () => {
         style={{
           marginBottom: 16,
           borderRadius: 12,
-          background: '#ffffff',
-          border: '1px solid #E3EED4',
+          background: 'var(--color-bg-primary)',
+          border: '1px solid var(--color-border)',
         }}
       >
         <Row gutter={16} align="middle">
@@ -587,9 +586,9 @@ export const PartnersPage = () => {
         loading={isLoading}
         style={{
           borderRadius: 16,
-          background: 'linear-gradient(135deg, #ffffff 0%, #F0F7EB 100%)',
-          border: '1px solid #E3EED4',
-          boxShadow: '0 2px 12px rgba(15, 42, 29, 0.08)',
+          background: 'var(--card-bg)',
+          border: '1px solid var(--card-border)',
+          boxShadow: 'var(--card-shadow)',
         }}
         className="hover-lift-green"
       >
@@ -606,7 +605,7 @@ export const PartnersPage = () => {
 
         {/* Пагинация */}
         <div style={{ marginTop: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ color: '#689071' }}>
+          <span style={{ color: 'var(--color-text-secondary)' }}>
             {t('common.showing', 'Показано')} {((page - 1) * pageSize) + 1}-{Math.min(page * pageSize, total)} {t('common.of', 'из')} {total}
           </span>
           <Pagination
@@ -632,7 +631,7 @@ export const PartnersPage = () => {
       <Modal
         title={
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <ShopOutlined style={{ color: '#689071', fontSize: 24 }} />
+            <ShopOutlined style={{ color: 'var(--color-primary)', fontSize: 24 }} />
             <span style={{ fontSize: 20, fontWeight: 600 }}>
               {editingPartner ? t('partners.edit', 'Редактировать партнёра') : t('partners.add', 'Добавить партнёра')}
             </span>
@@ -655,7 +654,7 @@ export const PartnersPage = () => {
           top: window.innerWidth < 768 ? 10 : 20,
           maxWidth: '95vw',
         }}
-        okButtonProps={{ style: { backgroundColor: '#689071', borderColor: '#689071' } }}
+        okButtonProps={{ style: { background: 'var(--color-primary)', borderColor: 'var(--color-primary)' } }}
       >
         <Form
           form={form}
@@ -773,9 +772,9 @@ export const PartnersPage = () => {
                             url: response.data?.logo_url,
                             response: response.data,
                           }]);
-                          message.success('Логотип загружен');
+                          message.success(t('partners.logoUploaded', 'Логотип загружен'));
                         } catch (error) {
-                          message.error('Ошибка при загрузке логотипа');
+                          message.error(t('partners.logoUploadError', 'Ошибка при загрузке логотипа'));
                           setLogoFileList(fileList.filter((f: any) => f.uid !== fileList[0].uid));
                         }
                       }
@@ -784,12 +783,12 @@ export const PartnersPage = () => {
                       if (editingPartner) {
                         return true; // Разрешаем загрузку
                       }
-                      message.warning('Сначала создайте партнера');
+                      message.warning(t('partners.createPartnerFirst', 'Сначала создайте партнера'));
                       return false;
                     }}
                     customRequest={async ({ file, onSuccess, onError }) => {
                       if (!editingPartner) {
-                        onError?.(new Error('Партнер не выбран'));
+                        onError?.(new Error(t('partners.partnerNotSelected', 'Партнер не выбран')));
                         return;
                       }
                       try {
@@ -836,9 +835,9 @@ export const PartnersPage = () => {
                             url: response.data?.cover_image_url,
                             response: response.data,
                           }]);
-                          message.success('Обложка загружена');
+                          message.success(t('partners.coverUploaded', 'Обложка загружена'));
                         } catch (error) {
-                          message.error('Ошибка при загрузке обложки');
+                          message.error(t('partners.coverUploadError', 'Ошибка при загрузке обложки'));
                           setCoverFileList(fileList.filter((f: any) => f.uid !== fileList[0].uid));
                         }
                       }
@@ -847,12 +846,12 @@ export const PartnersPage = () => {
                       if (editingPartner) {
                         return true;
                       }
-                      message.warning('Сначала создайте партнера');
+                      message.warning(t('partners.createPartnerFirst', 'Сначала создайте партнера'));
                       return false;
                     }}
                     customRequest={async ({ file, onSuccess, onError }) => {
                       if (!editingPartner) {
-                        onError?.(new Error('Партнер не выбран'));
+                        onError?.(new Error(t('partners.partnerNotSelected', 'Партнер не выбран')));
                         return;
                       }
                       try {
@@ -993,7 +992,7 @@ export const PartnersPage = () => {
                 </Form.Item>
 
                 {/* Мини-карта для предпросмотра с возможностью клика */}
-                <div style={{ height: 200, borderRadius: 8, overflow: 'hidden', marginTop: 16, border: '1px solid #E3EED4', position: 'relative' }}>
+                <div style={{ height: 200, borderRadius: 8, overflow: 'hidden', marginTop: 16, border: '1px solid var(--color-border)', position: 'relative' }}>
                   <MapContainer
                     center={mapCoords || [form.getFieldValue('latitude') || 42.8746, form.getFieldValue('longitude') || 74.5698]}
                     zoom={mapCoords ? 15 : 13}
@@ -1049,7 +1048,7 @@ export const PartnersPage = () => {
                     padding: '4px 8px',
                     borderRadius: 4,
                     fontSize: 12,
-                    color: '#689071',
+                    color: 'var(--color-text-secondary)',
                     zIndex: 1000,
                   }}>
                     {t('partners.clickOnMap', 'Кликните на карте для выбора адреса')}

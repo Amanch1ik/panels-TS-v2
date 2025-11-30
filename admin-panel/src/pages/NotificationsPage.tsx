@@ -21,7 +21,7 @@ import {
 } from '@ant-design/icons';
 import { notificationsApi } from '@/services/api';
 import { t } from '@/i18n';
-import dayjs from 'dayjs';
+import { formatDateTime } from '@/utils/dateUtils';
 import '../styles/animations.css';
 
 export const NotificationsPage = () => {
@@ -67,7 +67,7 @@ export const NotificationsPage = () => {
       key: 'template',
       width: 300,
       render: (template: string, record: any) => (
-        <span style={{ color: '#0F2A1D', fontWeight: 500 }}>
+        <span style={{ color: 'var(--color-text-primary)', fontWeight: 500 }}>
           {template || record.title || t('notifications.notification', 'Уведомление')}
         </span>
       ),
@@ -98,7 +98,7 @@ export const NotificationsPage = () => {
       render: (schedule: string, record: any) => {
         if (schedule) return schedule;
         if (record.scheduled_for) {
-          return dayjs(record.scheduled_for).format('DD.MM.YYYY, HH:mm');
+          return formatDateTime(record.scheduled_for, t('notifications.tomorrow', 'Завтра, 9:00'));
         }
         return t('notifications.tomorrow', 'Завтра, 9:00');
       },
@@ -112,10 +112,10 @@ export const NotificationsPage = () => {
         const isSent = sent === t('notifications.sent', 'Отправлено') || record.status === 'sent' || record.is_sent;
         return (
           <Tag
-            color={isSent ? 'success' : 'error'}
+            color={isSent ? 'var(--color-success)' : 'var(--color-error)'}
             style={{
-              color: isSent ? '#689071' : '#ff4d4f',
-              border: isSent ? '1px solid #689071' : '1px solid #ff4d4f',
+              color: 'var(--color-text-inverse)',
+              border: 'none',
               backgroundColor: 'transparent',
             }}
           >
@@ -129,7 +129,7 @@ export const NotificationsPage = () => {
   return (
     <div className="fade-in">
       <div style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1 style={{ fontSize: 24, fontWeight: 600, color: '#0F2A1D', margin: 0 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 600, color: 'var(--color-text-primary)', margin: 0 }}>
           {t('notifications.title', 'Уведомления')}
         </h1>
         <Space>
@@ -170,7 +170,7 @@ export const NotificationsPage = () => {
           type="primary"
           icon={<PlusOutlined />}
           onClick={() => setIsModalOpen(true)}
-          style={{ backgroundColor: '#689071', borderColor: '#689071' }}
+          style={{ background: 'var(--color-primary)', borderColor: 'var(--color-primary)' }}
           size="large"
         >
           {t('notifications.new', 'Новое уведомление')}
@@ -181,9 +181,9 @@ export const NotificationsPage = () => {
         loading={isLoading}
         style={{
           borderRadius: 16,
-          background: 'linear-gradient(135deg, #ffffff 0%, #F0F7EB 100%)',
-          border: '1px solid #E3EED4',
-          boxShadow: '0 2px 12px rgba(15, 42, 29, 0.08)',
+          background: 'var(--card-bg)',
+          border: '1px solid var(--card-border)',
+          boxShadow: 'var(--card-shadow)',
         }}
         className="hover-lift-green"
       >

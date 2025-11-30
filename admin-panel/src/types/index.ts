@@ -10,6 +10,8 @@ export interface User {
   is_blocked: boolean;
   created_at: string;
   last_login_at?: string;
+  // Баланс кошелька пользователя (используется в UsersPage)
+  balance?: number;
 }
 
 export interface Partner {
@@ -26,6 +28,10 @@ export interface Partner {
   is_active: boolean;
   is_verified: boolean;
   created_at: string;
+  // Дополнительные поля, используемые на странице партнёров
+  status?: 'active' | 'inactive' | 'pending' | 'rejected' | string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface Transaction {
@@ -120,6 +126,16 @@ export interface DashboardStats {
   active_users_by_hour?: Array<{ hour: number; count: number }>;
   revenue_by_day?: Array<{ date: string; amount: number }>;
   transactions_by_status?: Array<{ status: string; count: number }>;
+  // Дополнительные поля для расширенной аналитики дашборда
+  users_by_city?: Array<{ city: string; count: number }>;
+  transaction_types?: Array<{ type: string; count: number }>;
+  revenue_trend?: Array<{ date: string; amount: number }>;
+  partner_performance?: Array<{ partner_id: number; name?: string; revenue?: number }>;
+  average_order?: number;
+  conversion_rate?: number;
+  retention_rate?: number;
+  lifetime_value?: number;
+  total_partners?: number;
 }
 
 export interface AdminUser {

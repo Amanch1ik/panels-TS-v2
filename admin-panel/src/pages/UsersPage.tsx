@@ -310,7 +310,7 @@ export const UsersPage = () => {
       key: 'balance',
       width: 120,
       render: (balance: number) => (
-        <span style={{ color: '#689071', fontWeight: 500 }}>
+        <span style={{ color: 'var(--color-primary)', fontWeight: 500 }}>
           {balance.toLocaleString()} Yess!Coin
         </span>
       ),
@@ -424,7 +424,7 @@ export const UsersPage = () => {
                   transferForm.setFieldsValue({ from_user_id: record.id });
                   setIsTransferModalOpen(true);
                 }}
-                style={{ color: '#689071' }}
+                style={{ color: 'var(--color-primary)' }}
               />
             </span>
           </Tooltip>
@@ -436,7 +436,7 @@ export const UsersPage = () => {
   return (
     <div className="fade-in">
       <div style={{ marginBottom: 20 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 600, color: '#0F2A1D', margin: 0 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 600, color: 'var(--color-text-primary)', margin: 0 }}>
           {t('users.title', 'Пользователи')}
         </h1>
       </div>
@@ -454,8 +454,8 @@ export const UsersPage = () => {
             <Statistic
               title={t('users.stats.total', 'Всего пользователей')}
               value={stats.total}
-              prefix={<UserOutlined style={{ color: '#689071', fontSize: 20 }} />}
-              valueStyle={{ color: '#0F2A1D', fontWeight: 600 }}
+              prefix={<UserOutlined style={{ color: 'var(--color-primary)', fontSize: 20 }} />}
+              valueStyle={{ color: 'var(--color-text-primary)', fontWeight: 600 }}
             />
           </Card>
         </Col>
@@ -471,7 +471,7 @@ export const UsersPage = () => {
               title={t('users.stats.active', 'Активные')}
               value={stats.active}
               prefix={<UserOutlined style={{ color: '#689071', fontSize: 20 }} />}
-              valueStyle={{ color: '#689071', fontWeight: 600 }}
+              valueStyle={{ color: 'var(--color-primary)', fontWeight: 600 }}
             />
           </Card>
         </Col>
@@ -487,7 +487,7 @@ export const UsersPage = () => {
               title={t('users.stats.inactive', 'Заблокированные')}
               value={stats.inactive}
               prefix={<LockOutlined style={{ color: '#ff4d4f', fontSize: 20 }} />}
-              valueStyle={{ color: '#ff4d4f', fontWeight: 600 }}
+              valueStyle={{ color: 'var(--color-error)', fontWeight: 600 }}
             />
           </Card>
         </Col>
@@ -504,7 +504,7 @@ export const UsersPage = () => {
               value={stats.totalBalance}
               prefix={<DollarOutlined style={{ color: '#689071', fontSize: 20 }} />}
               suffix=" Yess!Coin"
-              valueStyle={{ color: '#262626', fontWeight: 600 }}
+              valueStyle={{ color: 'var(--color-text-primary)', fontWeight: 600 }}
               formatter={(value) => `${(Number(value) / 1000000).toFixed(1)}M`}
             />
           </Card>
@@ -571,7 +571,7 @@ export const UsersPage = () => {
           <Col xs={24} sm={12} md={8}>
             <Input
               placeholder={t('common.search', 'Поиск по имени, телефону или email...')}
-              prefix={<SearchOutlined style={{ color: '#689071' }} />}
+              prefix={<SearchOutlined style={{ color: 'var(--color-primary)' }} />}
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               allowClear
@@ -582,12 +582,12 @@ export const UsersPage = () => {
               }}
               suffix={
                 searchText && searchText !== debouncedSearchText ? (
-                  <span style={{ color: '#689071', fontSize: 12 }}>Поиск...</span>
+                  <span style={{ color: 'var(--color-primary)', fontSize: 12 }}>Поиск...</span>
                 ) : null
               }
             />
             {debouncedSearchText && (
-              <div style={{ marginTop: 8, fontSize: 12, color: '#689071' }}>
+              <div style={{ marginTop: 8, fontSize: 12, color: 'var(--color-primary)' }}>
                 Найдено результатов: {total}
               </div>
             )}
@@ -740,12 +740,12 @@ export const UsersPage = () => {
         {selectedUser && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div>
-              <div style={{ color: '#999', fontSize: 12 }}>Имя</div>
+              <div style={{ color: 'var(--color-text-tertiary)', fontSize: 12 }}>Имя</div>
               <div style={{ fontSize: 16, fontWeight: 500 }}>{selectedUser.name}</div>
             </div>
 
             <div>
-              <div style={{ color: '#999', fontSize: 12 }}>Телефон</div>
+              <div style={{ color: 'var(--color-text-tertiary)', fontSize: 12 }}>Телефон</div>
               <div style={{ fontSize: 14, display: 'flex', gap: 8, alignItems: 'center' }}>
                 <PhoneOutlined />
                 {selectedUser.phone}
@@ -753,7 +753,7 @@ export const UsersPage = () => {
             </div>
 
             <div>
-              <div style={{ color: '#999', fontSize: 12 }}>Email</div>
+              <div style={{ color: 'var(--color-text-tertiary)', fontSize: 12 }}>Email</div>
               <div style={{ fontSize: 14, display: 'flex', gap: 8, alignItems: 'center' }}>
                 <MailOutlined />
                 {selectedUser.email || '-'}
@@ -761,12 +761,12 @@ export const UsersPage = () => {
             </div>
 
             <div>
-              <div style={{ color: '#999', fontSize: 12 }}>Баланс</div>
+              <div style={{ color: 'var(--color-text-tertiary)', fontSize: 12 }}>Баланс</div>
               <div
                 style={{
                   fontSize: 18,
                   fontWeight: 600,
-                  color: '#52c41a',
+                  color: 'var(--color-success)',
                   display: 'flex',
                   gap: 8,
                   alignItems: 'center',
@@ -778,7 +778,7 @@ export const UsersPage = () => {
             </div>
 
             <div>
-              <div style={{ color: '#999', fontSize: 12 }}>Статус</div>
+              <div style={{ color: 'var(--color-text-tertiary)', fontSize: 12 }}>Статус</div>
               <Tag
                 color={selectedUser.is_active ? 'green' : 'red'}
                 style={{
@@ -793,7 +793,7 @@ export const UsersPage = () => {
             </div>
 
             <div>
-              <div style={{ color: '#999', fontSize: 12 }}>Дата регистрации</div>
+              <div style={{ color: 'var(--color-text-tertiary)', fontSize: 12 }}>Дата регистрации</div>
               <div style={{ fontSize: 14, display: 'flex', gap: 8, alignItems: 'center' }}>
                 <CalendarOutlined />
                 {dayjs(selectedUser.created_at).format('DD.MM.YYYY HH:mm')}
@@ -933,7 +933,10 @@ export const UsersPage = () => {
                 max={transferFromUser?.balance}
                 placeholder={t('users.transfer.amountPlaceholder', 'Введите сумму')}
                 formatter={(value) => `${value} Y`}
-                parser={(value) => value?.replace(' Y', '') || ''}
+                parser={(value) => {
+                  const numeric = Number((value || '').toString().replace(' Y', ''));
+                  return Number.isNaN(numeric) ? 0 : numeric;
+                }}
               />
             </Form.Item>
             <Form.Item
@@ -948,15 +951,15 @@ export const UsersPage = () => {
             {transferFromUser && (
               <div style={{ 
                 padding: 12, 
-                background: '#F0F7EB', 
+                background: 'var(--color-bg-secondary)', 
                 borderRadius: 8, 
                 marginTop: 8,
-                border: '1px solid #E3EED4'
+                border: '1px solid var(--color-border)'
               }}>
-                <div style={{ fontSize: 12, color: '#689071', marginBottom: 4 }}>
+                <div style={{ fontSize: 12, color: 'var(--color-primary)', marginBottom: 4 }}>
                   {t('users.transfer.available', 'Доступно для перевода')}:
                 </div>
-                <div style={{ fontSize: 18, fontWeight: 600, color: '#0F2A1D' }}>
+                <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--color-text-primary)' }}>
                   {transferFromUser.balance.toLocaleString()} Y
                 </div>
               </div>

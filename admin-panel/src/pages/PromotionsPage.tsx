@@ -184,7 +184,7 @@ export const PromotionsPage = () => {
             <span style={{ fontSize: 10 }}>{t('promotions.discount', 'скидка')}</span>
           </div>
           <div>
-            <div style={{ fontWeight: 500, color: '#0F2A1D' }}>{record.title || t('promotions.defaultTitle', 'Пятерочка')}</div>
+            <div style={{ fontWeight: 500, color: 'var(--color-text-primary)' }}>{record.title || t('promotions.defaultTitle', 'Пятерочка')}</div>
             <div style={{ fontSize: 12, color: '#689071' }}>
               -{record.discount_percent || 20}% {t('promotions.discount', 'скидка')}
             </div>
@@ -283,14 +283,14 @@ export const PromotionsPage = () => {
   return (
     <div className="fade-in">
       <div style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1 style={{ fontSize: 24, fontWeight: 600, color: '#0F2A1D', margin: 0 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 600, color: 'var(--color-text-primary)', margin: 0 }}>
           {t('promotions.title', 'Акции')}
         </h1>
         <Button
           type="primary"
           icon={<PlusOutlined />}
           onClick={() => setIsModalOpen(true)}
-          style={{ backgroundColor: '#689071', borderColor: '#689071' }}
+          style={{ backgroundColor: 'var(--color-primary)', borderColor: 'var(--color-primary)' }}
         >
           {t('promotions.add', 'Создать акцию')}
         </Button>
@@ -299,9 +299,9 @@ export const PromotionsPage = () => {
       <Card
         style={{
           borderRadius: 16,
-          background: 'linear-gradient(135deg, #ffffff 0%, #F0F7EB 100%)',
-          border: '1px solid #E3EED4',
-          boxShadow: '0 2px 12px rgba(15, 42, 29, 0.08)',
+          background: 'var(--card-bg)',
+          border: '1px solid var(--card-border)',
+          boxShadow: 'var(--card-shadow)',
         }}
         className="hover-lift-green"
       >

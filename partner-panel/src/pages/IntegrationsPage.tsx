@@ -1,53 +1,93 @@
-import { Card, Table, Button, Space, Switch } from 'antd';
+import { Card, Table, Button, Space, Switch, Spin, Empty, message } from 'antd';
 import { CopyOutlined } from '@ant-design/icons';
 import { DeleteButton } from '../components/DeleteButton';
-
-const integrationsData = [
-  {
-    key: '1', // React key
-    id: 1,
-    name: 'POS integration',
-    apiKey: '1a2b3c4d5e6f',
-    date: '20.10.2025 14:29',
-  },
-  {
-    key: '2',
-    id: 2,
-    name: 'Loyalty API',
-    apiKey: '6fg78h9i0j',
-    date: '20.10.2025 14:29',
-  },
-  {
-    key: '3',
-    id: 3,
-    name: 'Webhook',
-    apiKey: '1k2i3m4k5o',
-    date: '20.10.2025 14:29',
-  },
-  {
-    key: '4',
-    id: 4,
-    name: 'POS integration',
-    apiKey: '1a2b3c4d5e6f',
-    date: '20.10.2025 14:29',
-  },
-  {
-    key: '5',
-    id: 5,
-    name: 'Loyalty API',
-    apiKey: '6fg78h9i0j',
-    date: '20.10.2025 14:29',
-  },
-  {
-    key: '6',
-    id: 6,
-    name: 'Webhook',
-    apiKey: '1k2i3m4k5o',
-    date: '20.10.2025 14:29',
-  },
-];
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { integrationsApi } from '../services/api';
+import { formatDateTime } from '../utils/dateUtils';
+import { toArray } from '../utils/arrayUtils';
 
 export const IntegrationsPage = () => {
+  const queryClient = useQueryClient();
+
+  // Загрузка API ключей из API
+  const { data: apiKeysResponse, isLoading } = useQuery({
+    queryKey: ['partner-api-keys'],
+    queryFn: async () => {
+      try {
+        const response = await integrationsApi.getApiKeys();
+        return response?.data || [];
+      } catch (error: any) {
+        console.error('Error fetching API keys:', error);
+        return [];
+      }
+    },
+    retry: 1,
+  });
+
+  // Загрузка настроек интеграций
+  const { data: settingsResponse } = useQuery({
+    queryKey: ['partner-integration-settings'],
+    queryFn: async () => {
+      try {
+        const response = await integrationsApi.getIntegrationSettings();
+        return response?.data || {};
+      } catch (error: any) {
+        console.error('Error fetching integration settings:', error);
+        return {};
+      }
+    },
+    retry: 1,
+  });
+
+  const apiKeys = toArray(apiKeysResponse, []);
+  const settings = settingsResponse || {};
+
+  // Мутация для удаления ключа
+  const deleteKeyMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await integrationsApi.deleteApiKey(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['partner-api-keys'] });
+      message.success('API ключ удален');
+    },
+    onError: (error: any) => {
+      console.error('Error deleting API key:', error);
+      message.error('Не удалось удалить API ключ');
+    },
+  });
+
+  // Мутация для обновления настроек
+  const updateSettingsMutation = useMutation({
+    mutationFn: async (data: any) => {
+      await integrationsApi.updateIntegrationSettings(data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['partner-integration-settings'] });
+      message.success('Настройки обновлены');
+    },
+    onError: (error: any) => {
+      console.error('Error updating settings:', error);
+      message.error('Не удалось обновить настройки');
+    },
+  });
+
+  const handleCopyApiKey = (apiKey: string) => {
+    navigator.clipboard.writeText(apiKey);
+    message.success('API ключ скопирован в буфер обмена');
+  };
+
+  const handleDeleteKey = (id: number) => {
+    deleteKeyMutation.mutate(id);
+  };
+
+  const handleToggleNotification = (checked: boolean) => {
+    updateSettingsMutation.mutate({
+      ...settings,
+      notify_cashback: checked,
+    });
+  };
+
   const columns = [
     {
       title: 'ID',
@@ -59,36 +99,46 @@ export const IntegrationsPage = () => {
       title: 'Название',
       dataIndex: 'name',
       key: 'name',
+      render: (name: string, record: any) => name || record.title || 'API Key',
     },
     {
       title: 'Ключ',
-      dataIndex: 'apiKey',
-      key: 'apiKey',
-      render: (apiKey: string) => (
-        <Space>
-          <code style={{ background: '#F0F7EB', padding: '4px 8px', borderRadius: 4, color: '#0F2A1D' }}>{apiKey}</code>
-          <Button
-            type="text"
-            icon={<CopyOutlined />}
-            size="small"
-            onClick={() => {
-              navigator.clipboard.writeText(apiKey);
-            }}
-          />
-        </Space>
-      ),
+      dataIndex: 'api_key',
+      key: 'api_key',
+      render: (apiKey: string, record: any) => {
+        const key = apiKey || record.apiKey || record.key || '';
+        if (!key) return '-';
+        return (
+          <Space>
+            <code style={{ background: '#F0F7EB', padding: '4px 8px', borderRadius: 4, color: '#0F2A1D' }}>
+              {key.length > 20 ? `${key.substring(0, 20)}...` : key}
+            </code>
+            <Button
+              type="text"
+              icon={<CopyOutlined />}
+              size="small"
+              onClick={() => handleCopyApiKey(key)}
+            />
+          </Space>
+        );
+      },
     },
     {
       title: 'Дата создания',
-      dataIndex: 'date',
-      key: 'date',
+      dataIndex: 'created_at',
+      key: 'created_at',
+      render: (date: string, record: any) => {
+        const dateValue = date || record.date || record.created_at;
+        return dateValue ? formatDateTime(dateValue) : '-';
+      },
     },
     {
       title: 'Действие',
       key: 'actions',
+      width: 100,
       render: (_: any, record: any) => (
         <DeleteButton
-          onDelete={() => console.log('Delete integration', record.id)}
+          onDelete={() => handleDeleteKey(record.id)}
           text=""
           className="danger compact icon-only"
           confirmTitle="Удалить API ключ?"
@@ -130,12 +180,23 @@ export const IntegrationsPage = () => {
           boxShadow: '0 2px 12px rgba(245, 166, 35, 0.08)',
         }}
       >
-        <Table
-          columns={columns}
-          dataSource={integrationsData}
-          pagination={{ pageSize: 10 }}
-          rowClassName={() => 'partner-table-row'}
-        />
+        {isLoading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}>
+            <Spin size="large" />
+          </div>
+        ) : apiKeys.length === 0 ? (
+          <Empty description="Нет API ключей" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+        ) : (
+          <Table
+            columns={columns}
+            dataSource={apiKeys.map((key: any) => ({
+              ...key,
+              key: key.id?.toString() || Math.random().toString(),
+            }))}
+            pagination={{ pageSize: 10 }}
+            rowClassName={() => 'partner-table-row'}
+          />
+        )}
       </Card>
 
       <Card
@@ -149,7 +210,12 @@ export const IntegrationsPage = () => {
       >
         <Space style={{ width: '100%', justifyContent: 'space-between' }}>
           <span style={{ color: '#0F2A1D', fontWeight: 500 }}>Уведомлять клиента о кешбэке</span>
-          <Switch defaultChecked style={{ backgroundColor: '#689071' }} />
+          <Switch 
+            checked={settings.notify_cashback !== false}
+            onChange={handleToggleNotification}
+            loading={updateSettingsMutation.isPending}
+            style={{ backgroundColor: settings.notify_cashback !== false ? '#689071' : undefined }} 
+          />
         </Space>
       </Card>
 

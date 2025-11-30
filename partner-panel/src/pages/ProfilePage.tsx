@@ -8,9 +8,10 @@ export const ProfilePage = () => {
   const [form] = Form.useForm();
   const [avatarList, setAvatarList] = useState<any[]>([]);
 
-  // Загрузка данных профиля
+  // Используем данные из useAuth вместо отдельного запроса (дедупликация)
+  // Это предотвращает дублирование запросов к /partner/me
   const { data: profileData, isLoading } = useQuery({
-    queryKey: ['partnerProfile'],
+    queryKey: ['currentPartner'], // Используем тот же ключ, что и useAuth
     queryFn: async () => {
       try {
         const response = await partnerApi.getCurrentPartner();
@@ -24,7 +25,13 @@ export const ProfilePage = () => {
         throw err;
       }
     },
+    staleTime: 5 * 60 * 1000, // 5 минут - данные считаются свежими
+    gcTime: 10 * 60 * 1000, // 10 минут в кэше
     retry: 1,
+    refetchOnMount: false, // Не перезапрашивать если данные уже есть
+    refetchOnWindowFocus: false,
+    // React Query автоматически дедуплицирует запросы с одинаковым queryKey
+    // Если useAuth уже загрузил данные, этот запрос не выполнится
   });
 
   // Заполняем форму при загрузке данных

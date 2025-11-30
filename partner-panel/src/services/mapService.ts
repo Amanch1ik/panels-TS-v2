@@ -30,9 +30,12 @@ export async function buildRouteViaBackend(
   mode: 'driving' | 'walking' | 'cycling' | 'transit' = 'driving'
 ): Promise<RouteResult | null> {
   try {
-    const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8000';
+    const isDev = (import.meta as any).env?.DEV;
+    const envApiBase = (import.meta as any).env?.VITE_API_URL || '';
+    const base = isDev && envApiBase ? String(envApiBase).replace(/\/$/, '') : '';
     const token = localStorage.getItem('partner_token');
-    const res = await fetch(`${API_BASE_URL}/api/v1/routes/osrm`, {
+    const url = base ? `${base}/api/v1/routes/osrm` : '/api/v1/routes/osrm';
+    const res = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -72,9 +75,12 @@ export async function buildTransitViaBackend(
   end: [number, number]
 ): Promise<RouteResult | null> {
   try {
-    const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8000';
+    const isDev = (import.meta as any).env?.DEV;
+    const envApiBase = (import.meta as any).env?.VITE_API_URL || '';
+    const base = isDev && envApiBase ? String(envApiBase).replace(/\/$/, '') : '';
     const token = localStorage.getItem('partner_token');
-    const res = await fetch(`${API_BASE_URL}/api/v1/routes/transit`, {
+    const url = base ? `${base}/api/v1/routes/transit` : '/api/v1/routes/transit';
+    const res = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

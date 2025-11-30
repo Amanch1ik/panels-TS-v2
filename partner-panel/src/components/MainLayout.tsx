@@ -19,6 +19,9 @@ import { SearchResults } from './SearchResults';
 import { t } from '@/i18n';
 import { useTheme } from '@/hooks/useTheme';
 import { SunOutlined, MoonOutlined } from '@ant-design/icons';
+import { useQuery } from '@tanstack/react-query';
+import { notificationsApi } from '@/services/api';
+import { toArray } from '@/utils/arrayUtils';
 import './MainLayout.css';
 
 const { Header, Sider, Content } = Layout;
@@ -49,6 +52,31 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   const [profileForm] = Form.useForm();
   const searchInputRef = React.useRef<any>(null);
   
+  // Загружаем количество непрочитанных уведомлений из API
+  const { data: notificationsData } = useQuery({
+    queryKey: ['partner-notifications-count'],
+    queryFn: async () => {
+      try {
+        const response = await notificationsApi.getNotifications({ page: 1, limit: 50 });
+        const notifications = toArray(
+          response?.data?.notifications || 
+          response?.data || 
+          response?.notifications || 
+          [],
+          []
+        );
+        return notifications;
+      } catch (error) {
+        console.error('Error fetching notifications count:', error);
+        return [];
+      }
+    },
+    retry: 1,
+    staleTime: 30 * 1000, // 30 секунд
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+  });
+
   // Используем данные из useAuth
   const user: User = authUser || {
     id: '',
@@ -57,6 +85,11 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
     avatar_url: '',
     role: 'partner',
   };
+
+  // Подсчитываем непрочитанные уведомления
+  const unreadNotificationsCount = toArray(notificationsData, []).filter(
+    (n: any) => !n.read && n.is_read !== true
+  ).length;
   
   // Debounce для предотвращения double-click
   const lastClickRef = useRef<number>(0);
@@ -289,7 +322,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
               onClick={() => setIsNotificationOpen(true)}
             >
               <Badge 
-                count={5} 
+                count={unreadNotificationsCount > 0 ? unreadNotificationsCount : 0} 
                 size="small"
                 style={{ backgroundColor: '#689071' }}
               >
@@ -333,32 +366,6 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
       <NotificationCenter
         open={isNotificationOpen}
         onClose={() => setIsNotificationOpen(false)}
-        notifications={[
-          {
-            id: '1',
-            title: 'Новая акция создана',
-            message: 'Ваша акция "Скидка 20%" успешно опубликована',
-            type: 'success',
-            timestamp: '2 минуты назад',
-            read: false,
-          },
-          {
-            id: '2',
-            title: 'Новый сотрудник добавлен',
-            message: 'Peter Taylor был добавлен в систему',
-            type: 'info',
-            timestamp: '1 час назад',
-            read: false,
-          },
-          {
-            id: '3',
-            title: 'Платеж получен',
-            message: 'Платеж на сумму 10,000 сом успешно обработан',
-            type: 'success',
-            timestamp: '3 часа назад',
-            read: true,
-          },
-        ]}
       />
 
       {/* Модальное окно редактирования профиля */}

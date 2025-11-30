@@ -29,7 +29,6 @@ import { t } from '@/i18n';
 export const SettingsPage = () => {
   const [categoryForm] = Form.useForm();
   const [cityForm] = Form.useForm();
-  const [limitsForm] = Form.useForm();
 
   // State для модальных окон
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
@@ -57,11 +56,8 @@ export const SettingsPage = () => {
     retry: 1,
   });
 
-  const { data: limits } = useQuery({
-    queryKey: ['limits'],
-    queryFn: () => settingsApi.limits.getAll(),
-    retry: 1,
-  });
+  // Лимиты пока не используются в UI, поэтому не дергаем endpoint, чтобы избежать лишних запросов
+  const limits = undefined;
 
   const { data: apiKeys } = useQuery({
     queryKey: ['api-keys'],
@@ -101,13 +97,9 @@ export const SettingsPage = () => {
   // Обработчики для городов
   const handleAddCity = async (values: any) => {
     try {
-      if (editingCity) {
-        await settingsApi.cities.update(editingCity.id, values);
-        message.success(t('settings.cityUpdated', 'Город обновлен'));
-      } else {
-        await settingsApi.cities.create(values);
-        message.success(t('settings.cityAdded', 'Город добавлен'));
-      }
+      // На текущем этапе поддерживаем только создание города
+      await settingsApi.cities.create(values);
+      message.success(t('settings.cityAdded', 'Город добавлен'));
       setIsCityModalOpen(false);
       cityForm.resetFields();
       setEditingCity(null);
@@ -194,16 +186,7 @@ export const SettingsPage = () => {
       render: (_: any, record: any) => (
         <Space size="small">
           <Tooltip title={t('common.edit', 'Редактировать')}>
-            <Button
-              type="text"
-              size="small"
-              icon={<EditOutlined />}
-              onClick={() => {
-                setEditingCity(record);
-                cityForm.setFieldsValue(record);
-                setIsCityModalOpen(true);
-              }}
-            />
+            {/* Редактирование города пока не поддерживается */}
           </Tooltip>
           <Tooltip title={t('common.delete', 'Удалить')}>
             <DeleteButton
@@ -230,7 +213,7 @@ export const SettingsPage = () => {
       key: 'key',
       render: (key: string) => (
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <code style={{ color: '#689071' }}>
+          <code style={{ color: 'var(--color-primary)' }}>
             {key.substring(0, 10)}...{key.substring(key.length - 4)}
           </code>
           <Tooltip title={t('settings.copy', 'Скопировать')}>
@@ -317,26 +300,26 @@ export const SettingsPage = () => {
   return (
     <div className="fade-in">
       <div style={{ marginBottom: 20 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 600, color: '#0F2A1D', margin: 0, marginBottom: 8 }}>
+        <h1 style={{ fontSize: 24, fontWeight: 600, color: 'var(--color-text-primary)', margin: 0, marginBottom: 8 }}>
           {t('settings.title', 'Настройки')}
         </h1>
-        <p style={{ color: '#689071', margin: 0 }}>
+        <p style={{ color: 'var(--color-primary)', margin: 0 }}>
           {t('settings.subtitle', 'Управление настройками и конфигурацией')}
         </p>
       </div>
 
       <Tabs
         items={[
-            {
+          {
             key: '1',
             label: t('settings.categories', 'Категории'),
-      children: (
+            children: (
               <Card
                 style={{
                   borderRadius: 16,
-                  background: 'linear-gradient(135deg, #ffffff 0%, #F0F7EB 100%)',
-                  border: '1px solid #E3EED4',
-                  boxShadow: '0 2px 12px rgba(15, 42, 29, 0.08)',
+                  background: 'var(--card-bg)',
+                  border: '1px solid var(--card-border)',
+                  boxShadow: 'var(--card-shadow)',
                 }}
                 className="hover-lift-green"
               >
@@ -349,126 +332,80 @@ export const SettingsPage = () => {
                       categoryForm.resetFields();
                       setIsCategoryModalOpen(true);
                     }}
-                    style={{ backgroundColor: '#689071', borderColor: '#689071' }}
+                    style={{ backgroundColor: 'var(--color-primary)', borderColor: 'var(--color-primary)' }}
                   >
                     {t('settings.addCategory', 'Добавить категорию')}
                   </Button>
                 </div>
-        <Table
+                <Table
                   columns={categoriesColumns}
                   dataSource={categoriesList}
-            rowKey="id"
-            pagination={false}
+                  rowKey="id"
+                  pagination={false}
                   loading={isLoading}
-          />
-        </Card>
-        ),
-    },
-      {
+                />
+              </Card>
+            ),
+          },
+          {
             key: '5',
             label: t('settings.currencies', 'Валюты'),
-      children: (
-        <Card
-          style={{
-            borderRadius: 16,
-            background: 'linear-gradient(135deg, #ffffff 0%, #F0F7EB 100%)',
-            border: '1px solid #E3EED4',
-            boxShadow: '0 2px 12px rgba(15, 42, 29, 0.08)',
-          }}
-          className="hover-lift-green"
-        >
-          <Table
-            columns={currenciesColumns}
-            dataSource={currenciesList}
-            rowKey="id"
-            pagination={false}
-            loading={currenciesEndpointAvailable && !currenciesData}
-          />
-        </Card>
-      ),
-    },
-    {
+            children: (
+              <Card
+                style={{
+                  borderRadius: 16,
+                  background: 'var(--card-bg)',
+                  border: '1px solid var(--card-border)',
+                  boxShadow: 'var(--card-shadow)',
+                }}
+                className="hover-lift-green"
+              >
+                <Table
+                  columns={currenciesColumns}
+                  dataSource={currenciesList}
+                  rowKey="id"
+                  pagination={false}
+                  loading={currenciesEndpointAvailable && !currenciesData}
+                />
+              </Card>
+            ),
+          },
+          {
             key: '6',
             label: t('settings.paymentProviders', 'Провайдеры оплаты'),
-      children: (
-        <Card
-          style={{
-            borderRadius: 16,
-            background: 'linear-gradient(135deg, #ffffff 0%, #F0F7EB 100%)',
-            border: '1px solid #E3EED4',
-            boxShadow: '0 2px 12px rgba(15, 42, 29, 0.08)',
-          }}
-          className="hover-lift-green"
-        >
-          <Table
-            columns={paymentProvidersColumns}
-            dataSource={paymentProvidersList}
-            rowKey="id"
-            pagination={false}
-            loading={false}
-          />
-        </Card>
-      ),
-    },
-    {
-            key: '7',
-            label: t('settings.taxRules', 'Налоговые правила'),
-      children: (
-        <Card
-          style={{
-            borderRadius: 16,
-            background: 'linear-gradient(135deg, #ffffff 0%, #F0F7EB 100%)',
-            border: '1px solid #E3EED4',
-            boxShadow: '0 2px 12px rgba(15, 42, 29, 0.08)',
-          }}
-          className="hover-lift-green"
-        >
-          <Table
-            columns={taxRulesColumns}
-            dataSource={taxRulesList}
-            rowKey="id"
-            pagination={false}
-            loading={false}
-          />
-        </Card>
-      ),
-    },
-    {
-            key: '8',
-            label: t('settings.shippingMethods','Способы доставки'),
-      children: (
-        <Card
-          style={{
-            borderRadius: 16,
-            background: 'linear-gradient(135deg, #ffffff 0%, #F0F7EB 100%)',
-            border: '1px solid #E3EED4',
-            boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
-          }}
-          className="hover-lift-green"
-        >
-          <Table
-            columns={shippingMethodsColumns}
-            dataSource={shippingMethodsList}
-            rowKey="id"
-            pagination={false}
-            loading={false}
-          />
-        </Card>
-      ),
-    },
-    {
+            children: (
+              <Card
+                style={{
+                  borderRadius: 16,
+                  background: 'var(--card-bg)',
+                  border: '1px solid var(--card-border)',
+                  boxShadow: 'var(--card-shadow)',
+                }}
+                className="hover-lift-green"
+              >
+                <Table
+                  columns={paymentProvidersColumns}
+                  dataSource={paymentProvidersList}
+                  rowKey="id"
+                  pagination={false}
+                  loading={false}
+                />
+              </Card>
+            ),
+          },
+          {
             key: '4',
             label: t('settings.apiKeys', 'API ключи'),
-      children: (
-        <Card
-          style={{
-            borderRadius: 16,
-            background: 'linear-gradient(135deg, #ffffff 0%, #F0F7EB 100%)',
-            border: '1px solid #E3EED4',
-            boxShadow: '0 2px 12px rgba(15, 42, 29, 0.08)',
-          }}
-          className="hover-lift-green"
-        >
+            children: (
+              <Card
+                style={{
+                  borderRadius: 16,
+                  background: 'var(--card-bg)',
+                  border: '1px solid var(--card-border)',
+                  boxShadow: 'var(--card-shadow)',
+                }}
+                className="hover-lift-green"
+              >
                 <div style={{ marginBottom: 16 }}>
                   <Button
                     type="primary"
@@ -496,7 +433,7 @@ export const SettingsPage = () => {
                         },
                       });
                     }}
-                    style={{ backgroundColor: '#689071', borderColor: '#689071' }}
+                    style={{ backgroundColor: 'var(--color-primary)', borderColor: 'var(--color-primary)' }}
                   >
                     {t('settings.createApiKey', '+ Создать API ключ')}
                   </Button>
@@ -504,13 +441,13 @@ export const SettingsPage = () => {
                 <Table
                   columns={apiKeysColumns}
                   dataSource={apiKeysList}
-            rowKey="id"
-            pagination={false}
+                  rowKey="id"
+                  pagination={false}
                   loading={isLoading}
-          />
-        </Card>
-      ),
-    },
+                />
+              </Card>
+            ),
+          },
         ]}
       />
 
