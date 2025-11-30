@@ -81,13 +81,21 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Пропускаем ВСЕ запросы в режиме разработки (localhost:5173 - Vite dev server)
+  // Пропускаем ВСЕ запросы к Vite dev server (localhost:5173 или без порта)
   if (url.hostname === 'localhost' && (url.port === '5173' || url.port === '')) {
     return; // НЕ перехватываем запросы к Vite dev server
   }
   
   // Пропускаем запросы к Vite HMR WebSocket
   if (url.protocol === 'ws:' || url.protocol === 'wss:') {
+    return;
+  }
+  
+  // Пропускаем запросы к Vite client модулям
+  if (url.pathname.includes('/@vite/') || 
+      url.pathname.includes('/@react-refresh') ||
+      url.pathname.includes('/@id/') ||
+      url.pathname.startsWith('/node_modules/vite/')) {
     return;
   }
 
