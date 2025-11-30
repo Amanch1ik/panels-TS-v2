@@ -50,6 +50,11 @@ export default defineConfig(({ mode }) => {
       sourcemap: !isProduction, // Source maps только в development
       reportCompressedSize: true,
       cssCodeSplit: true,
+      target: 'es2015', // Поддержка более старых браузеров
+      // Обеспечиваем совместимость
+      commonjsOptions: {
+        include: [/node_modules/],
+      },
     },
   };
 });

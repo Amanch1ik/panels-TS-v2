@@ -1,5 +1,6 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
 import { createMetricsInterceptor, errorLogger } from '../../../shared/monitoring';
+import { getUserFriendlyMessage, logError, shouldRedirectToLogin } from '../../../shared/utils/errorHandler';
 
 // В dev можно явно указать удалённый backend через VITE_API_URL.
 // В остальных случаях используем относительный путь и прокси (Vite/nginx).
@@ -16,7 +17,7 @@ const apiClient: AxiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000, // 10 секунд таймаут для всех запросов
+  timeout: 30000, // 30 секунд таймаут для всех запросов (увеличено для медленных соединений)
 });
 
 // Создаем интерцептор метрик для отслеживания API запросов

@@ -8,6 +8,7 @@ import type {
   AdminUser,
 } from '@/types';
 import { createMetricsInterceptor, errorLogger } from '../../../shared/monitoring';
+import { getUserFriendlyMessage, logError, shouldRedirectToLogin } from '../../../shared/utils/errorHandler';
 
 // В development можем явно задать полный URL через VITE_API_URL (например, внешний стенд),
 // иначе и в dev, и в production используем относительный путь и прокси (Vite/nginx).

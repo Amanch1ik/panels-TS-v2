@@ -10,6 +10,9 @@ import './styles/theme.css'; // Система тем (светлая/тёмна
 import i18n, { type Language } from './i18n'; // Инициализация i18n и доступ к языку
 import I18nProvider from './i18nGatewayContext';
 
+// Инициализация проверки совместимости браузера
+import { initBrowserCompatibility, setupOnlineStatusListener } from '../../shared/utils/browserCompatibility';
+
 // Настройка dayjs с поддержкой нескольких локалей
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru';
@@ -38,6 +41,19 @@ applyDayjsLocale(i18n.getLanguage());
 i18n.subscribe(() => {
   applyDayjsLocale(i18n.getLanguage());
 });
+
+// Инициализация проверки браузера и онлайн статуса
+const browserInfo = initBrowserCompatibility();
+
+// Настройка отслеживания онлайн статуса
+setupOnlineStatusListener(
+  () => {
+    console.log('✅ Подключение к интернету восстановлено');
+  },
+  () => {
+    console.warn('⚠️ Потеряно подключение к интернету');
+  }
+);
 
 // Инициализация темы при загрузке
 const initTheme = () => {

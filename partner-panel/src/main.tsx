@@ -9,6 +9,24 @@ import './styles/global.css';
 import './styles/theme.css';
 import './i18n'; // Инициализация i18n
 
+// Инициализация проверки совместимости браузера
+import { initBrowserCompatibility, setupOnlineStatusListener } from '../../shared/utils/browserCompatibility';
+
+// Инициализация проверки браузера и онлайн статуса
+const browserInfo = initBrowserCompatibility();
+
+// Настройка отслеживания онлайн статуса
+setupOnlineStatusListener(
+  () => {
+    console.log('✅ Подключение к интернету восстановлено');
+    // Можно показать уведомление пользователю
+  },
+  () => {
+    console.warn('⚠️ Потеряно подключение к интернету');
+    // Можно показать предупреждение пользователю
+  }
+);
+
 // Инициализация темы при загрузке
 const initTheme = () => {
   const savedTheme = localStorage.getItem('partner_panel_theme');
