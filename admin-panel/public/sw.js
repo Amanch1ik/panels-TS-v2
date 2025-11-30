@@ -6,49 +6,70 @@
   'use strict';
   
   // Проверка dev режима - если мы на localhost с портом 5173, отключаемся
-  const isDev = self.location.hostname === 'localhost' && 
-                (self.location.port === '5173' || self.location.port === '');
+  // Используем registration.scope для более надежной проверки
+  const checkDevMode = () => {
+    try {
+      const hostname = self.location?.hostname || '';
+      const port = self.location?.port || '';
+      const scope = self.registration?.scope || '';
+      
+      // Проверяем несколько способов
+      return (hostname === 'localhost' && (port === '5173' || port === '')) ||
+             scope.includes('localhost:5173') ||
+             scope.includes('localhost/') && port === '5173';
+    } catch {
+      return false;
+    }
+  };
+  
+  const isDev = checkDevMode();
   
   if (isDev) {
-    // В dev режиме НЕ устанавливаем Service Worker
+    console.log('[SW] 🚫 Dev mode detected - Service Worker disabled');
+    
+    // В dev режиме сразу отключаемся
     self.addEventListener('install', (event) => {
+      console.log('[SW] Skipping installation in dev mode');
       event.waitUntil(
-        self.skipWaiting().then(() => {
-          console.log('[SW] Service Worker disabled in dev mode');
-        })
+        self.skipWaiting()
       );
     });
     
     self.addEventListener('activate', (event) => {
+      console.log('[SW] Deactivating in dev mode');
       event.waitUntil(
         Promise.all([
           // Удаляем все кэши
           caches.keys().then((cacheNames) => {
             return Promise.all(cacheNames.map((cacheName) => {
-              console.log('[SW] Deleting cache:', cacheName);
               return caches.delete(cacheName);
             }));
           }),
           // Отключаемся
-          self.clients.claim()
-        ]).then(() => {
-          console.log('[SW] Service Worker deactivated in dev mode');
+          self.clients.claim(),
           // Отменяем регистрацию
-          return self.registration.unregister().catch(() => {
-            // Игнорируем ошибки
-          });
+          self.registration.unregister().catch(() => {})
+        ]).then(() => {
+          console.log('[SW] ✅ Service Worker deactivated');
         })
       );
     });
     
-    // НЕ перехватываем никакие запросы в dev режиме
+    // НЕ перехватываем АБСОЛЮТНО никакие запросы в dev режиме
     self.addEventListener('fetch', (event) => {
-      // Просто ничего не делаем - пропускаем все запросы
+      // Просто ничего не делаем - полностью пропускаем
       return;
+    }, { passive: true });
+    
+    // Останавливаем выполнение здесь - код ниже не выполнится
+    // Но нужно все равно обработать сообщения для отключения
+    self.addEventListener('message', (event) => {
+      if (event.data?.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+      }
     });
     
-    // Останавливаем выполнение здесь
-    return;
+    return; // Выходим из IIFE
   }
 })();
 
