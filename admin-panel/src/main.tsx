@@ -61,7 +61,34 @@ if (!rootElement) {
 }
 
 // Агрессивное отключение Service Worker в режиме разработки
+// Выполняем ДО рендеринга приложения, чтобы Service Worker не успел загрузиться
 if (import.meta.env.DEV && 'serviceWorker' in navigator) {
+  // Выполняем синхронно, не ждем
+  (async function cleanupServiceWorker() {
+    try {
+      // Немедленно отключаем контроллер
+      if (navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
+      }
+      
+      // Отключаем все регистрации
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      for (const registration of registrations) {
+        await registration.unregister();
+      }
+      
+      // Очищаем кэши
+      const cacheNames = await caches.keys();
+      for (const cacheName of cacheNames) {
+        await caches.delete(cacheName);
+      }
+      
+      console.log('✅ Service Worker отключен для разработки');
+    } catch (error) {
+      console.error('❌ Ошибка отключения Service Worker:', error);
+    }
+  })();
+}
   // Выполняем немедленно, не ждем загрузки DOM
   (async () => {
     try {
