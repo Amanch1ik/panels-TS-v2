@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🚀 YESS! GO - Web Panels
+# 🚀 YESS! GO - Web Panels:
 
 **Modern TypeScript Web Applications for Loyalty System Management**
 
